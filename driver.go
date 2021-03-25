@@ -5,12 +5,18 @@ import (
 	"fmt"
 )
 
+// Driver defines a type of SQL driver accepted.
+// This will be used by the golang sql library to load a specific driver
 type Driver string
 
 const (
-	POSTGRES  Driver = "postgres"
-	MYSQL     Driver = "mysql"
-	ORACLE    Driver = "oracle"
+	// POSTGRES driver type
+	POSTGRES Driver = "postgres"
+	// MYSQL driver type
+	MYSQL Driver = "mysql"
+	// ORACLE driver type
+	ORACLE Driver = "oracle"
+	// SQLSERVER driver type
 	SQLSERVER Driver = "sqlserver"
 )
 

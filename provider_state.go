@@ -7,6 +7,7 @@ import (
 	"github.com/golang/protobuf/proto"
 )
 
+// SQLProviderState is an implementation of the proto-actor ProviderState interface
 type SQLProviderState struct {
 	*SQLProvider
 	wg sync.WaitGroup
@@ -85,6 +86,7 @@ func (s *SQLProviderState) DeleteEvents(actorName string, inclusiveToIndex int) 
 	}
 }
 
+// Restart executes task to run before the provider state is up
 func (s *SQLProviderState) Restart() {
 	// let us wait for any pending  writes to complete
 	s.wg.Wait()

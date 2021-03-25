@@ -40,6 +40,7 @@ func NewSQLProvider(ctx context.Context, actorSystem *actor.ActorSystem, dialect
 	}
 }
 
+// GetState returns an instance of the ProviderState
 func (p *SQLProvider) GetState() persistence.ProviderState {
 	return &SQLProviderState{
 		SQLProvider: p,
