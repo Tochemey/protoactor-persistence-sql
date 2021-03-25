@@ -55,10 +55,10 @@ func (journal *Journal) message() proto.Message {
 		log.Fatal(err)
 	}
 
-	instance := dynamicpb.NewMessage(t.Descriptor())
-	err = proto.Unmarshal(journal.Payload, instance)
+	message := dynamicpb.NewMessage(t.Descriptor())
+	err = proto.Unmarshal(journal.Payload, message)
 	if err != nil {
 		log.Fatal(err)
 	}
-	return instance
+	return message
 }

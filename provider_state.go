@@ -88,6 +88,7 @@ func (s *SqlProviderState) Restart() {
 	s.wg.Wait()
 }
 
+// GetSnapshotInterval return the snapshot interval
 func (s *SqlProviderState) GetSnapshotInterval() int {
 	return s.cfg.SnapshotInterval
 }

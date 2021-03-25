@@ -8,16 +8,16 @@ import (
 type Driver string
 
 const (
-	Postgres  Driver = "postgres"
-	MySQL     Driver = "mysql"
-	Oracle    Driver = "oracle"
-	SqlServer Driver = "sqlserver"
+	POSTGRES  Driver = "postgres"
+	MYSQL     Driver = "mysql"
+	ORACLE    Driver = "oracle"
+	SQLSERVER Driver = "sqlserver"
 )
 
 // IsValid checks whether the given driver is valid or not
 func (d Driver) IsValid() error {
 	switch d {
-	case Postgres, MySQL, Oracle, SqlServer:
+	case POSTGRES, MYSQL, ORACLE, SQLSERVER:
 		return nil
 	}
 	return errors.New("invalid driver type")
@@ -32,17 +32,17 @@ func (d Driver) String() string {
 func (d Driver) ConnStr(dbHost string, dbPort int, dbName, dbUser, dbPassword, dbSchema string) string {
 	var connectionInfo string
 	switch d {
-	case Postgres:
+	case POSTGRES:
 		connectionInfo = fmt.Sprintf(
 			"host=%s port=%d user=%s dbName=%s sslmode=disable search_path=%s", dbHost, dbPort, dbUser, dbName,
 			dbSchema,
 		)
-		// The postgres driver gets confused in cases where the user has no password
+		// The POSTGRES driver gets confused in cases where the user has no password
 		// set but a password is passed, so only set password if its non-empty
 		if dbPassword != "" {
 			connectionInfo += fmt.Sprintf(" password=%s", dbPassword)
 		}
-	case MySQL:
+	case MYSQL:
 		connectionInfo = fmt.Sprintf(
 			"%s:%s@tcp(%s:%v)/%s", dbUser, dbPassword, dbHost, dbPort, dbName,
 		)
@@ -53,5 +53,14 @@ func (d Driver) ConnStr(dbHost string, dbPort int, dbName, dbUser, dbPassword, d
 
 // SchemaSql returns the sql file to create schema for a given driver
 func (d Driver) SchemaSql() string {
-	return fmt.Sprintf("schemas/%s-schemas.sql", d.String())
+	switch d {
+	case POSTGRES:
+		return postgresSql
+	case MYSQL:
+		return mysqlSql
+	case SQLSERVER:
+		return sqlServerSql
+	}
+
+	return ""
 }

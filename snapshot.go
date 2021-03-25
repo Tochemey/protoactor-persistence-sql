@@ -50,10 +50,10 @@ func (snapshot *Snapshot) message() proto.Message {
 		log.Fatal(err)
 	}
 
-	instance := dynamicpb.NewMessage(t.Descriptor())
-	err = proto.Unmarshal(snapshot.Snapshot, instance)
+	message := dynamicpb.NewMessage(t.Descriptor())
+	err = proto.Unmarshal(snapshot.Snapshot, message)
 	if err != nil {
 		log.Fatal(err)
 	}
-	return instance
+	return message
 }
