@@ -16,7 +16,7 @@ The following sql-based datastore are supported out-of-the-box:
 
 ## TODOs
 
-- [] Documentation
-- [] More unit tests
-- [] Code cleanup
-- [] Cut an official release tag
+- [ ] Documentation
+- [ ] More unit tests
+- [ ] Code cleanup
+- [ ] Cut an official release tag
