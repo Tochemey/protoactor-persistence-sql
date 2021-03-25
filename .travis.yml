@@ -10,9 +10,6 @@ env:
     - EARTHLY_BUILD_ARGS="BRANCH_NAME,COMMIT_HASH"
     - EARTHLY_SECRETS="CODECOV_TOKEN"
 
-before_install:
-  - docker login --username $DOCKERHUB_USERNAME --password $DOCKERHUB_TOKEN
-
 install:
   - sudo /bin/sh -c 'wget https://github.com/earthly/earthly/releases/download/v0.5.8/earthly-linux-amd64 -O /usr/local/bin/earthly && chmod +x /usr/local/bin/earthly'
 
