@@ -1,5 +1,8 @@
 # ProtoActor Persistence SQL
 
+[![Build Status](https://www.travis-ci.com/Tochemey/protoactor-persistence-sql.svg?branch=master)](https://www.travis-ci.com/Tochemey/protoactor-persistence-sql)
+[![codecov](https://codecov.io/gh/Tochemey/protoactor-persistence-sql/branch/master/graph/badge.svg?token=HVCXK21FQU)](https://codecov.io/gh/Tochemey/protoactor-persistence-sql)
+
 An implementation of the ProtoActor persistence plugin APIs using RDBMS. It writes journal and snapshot to a configured
 sql datastore.
 
