@@ -1,7 +1,7 @@
 package persistence
 
 const (
-	mysqlSql = `
+	mysqlSQL = `
 		-- name: create-journal-table
 		CREATE TABLE IF NOT EXISTS journal
 		(

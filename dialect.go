@@ -34,8 +34,8 @@ type Config struct {
 	DBName     string // the database name
 }
 
-// SqlDialect will be implemented any database dialect
-type SqlDialect interface {
+// SQLDialect will be implemented any database dialect
+type SQLDialect interface {
 	CreateSchemasIfNotExist(ctx context.Context) error
 
 	Connect(ctx context.Context) error
@@ -58,11 +58,11 @@ type dialect struct {
 	db     *sql.DB
 
 	driver Driver
-	dotSql *dotsql.DotSql
+	dotSQL *dotsql.DotSql
 }
 
-// NewDialect creates a new instance of SqlDialect
-func NewDialect(config Config, driver Driver) SqlDialect {
+// NewDialect creates a new instance of SQLDialect
+func NewDialect(config Config, driver Driver) SQLDialect {
 	// validates driver
 	if err := driver.IsValid(); err != nil {
 		log.Fatalf("error: %v", err)
@@ -78,11 +78,11 @@ func NewDialect(config Config, driver Driver) SqlDialect {
 func (d *dialect) CreateSchemasIfNotExist(ctx context.Context) error {
 	var result error
 	// Create the various tables
-	if _, err := d.dotSql.ExecContext(ctx, d.db, createJournalTableStmt); err != nil {
+	if _, err := d.dotSQL.ExecContext(ctx, d.db, createJournalTableStmt); err != nil {
 		result = multierror.Append(result, err)
 	}
 
-	if _, err := d.dotSql.ExecContext(ctx, d.db, createSnapshotTableStmt); err != nil {
+	if _, err := d.dotSQL.ExecContext(ctx, d.db, createSnapshotTableStmt); err != nil {
 		result = multierror.Append(result, err)
 	}
 
@@ -108,13 +108,13 @@ func (d *dialect) Connect(ctx context.Context) error {
 	}
 
 	// Loads sql statements
-	dot, err := dotsql.LoadFromString(d.driver.SchemaSql())
+	dot, err := dotsql.LoadFromString(d.driver.SchemaFile())
 	if err != nil {
 		return err
 	}
 
 	d.db = db
-	d.dotSql = dot
+	d.dotSQL = dot
 	return nil
 }
 
@@ -125,7 +125,7 @@ func (d *dialect) Close() error {
 
 // PersistJournal persists a journal entry into the datastore
 func (d *dialect) PersistJournal(ctx context.Context, journal *Journal) error {
-	_, err := d.dotSql.ExecContext(
+	_, err := d.dotSQL.ExecContext(
 		ctx,
 		d.db, createJournalQueryStmt, journal.PersistenceID, journal.SequenceNumber, journal.Timestamp, journal.Payload,
 		journal.EventManifest, journal.WriterID,
@@ -136,7 +136,7 @@ func (d *dialect) PersistJournal(ctx context.Context, journal *Journal) error {
 
 // PersistSnapshot persists a snapshot entry into the snapshot data store
 func (d *dialect) PersistSnapshot(ctx context.Context, snapshot *Snapshot) error {
-	if _, err := d.dotSql.ExecContext(
+	if _, err := d.dotSQL.ExecContext(
 		ctx,
 		d.db, createSnapshotQueryStmt, snapshot.PersistenceID, snapshot.SequenceNumber, snapshot.Timestamp,
 		snapshot.Snapshot,
@@ -151,7 +151,7 @@ func (d *dialect) PersistSnapshot(ctx context.Context, snapshot *Snapshot) error
 // GetLatestSnapshot fetch the latest snapshot for a given persistenceID
 func (d *dialect) GetLatestSnapshot(ctx context.Context, persistenceID string) (*Snapshot, error) {
 	// execute the query against the database
-	row, err := d.dotSql.QueryRowContext(ctx, d.db, latestSnapshotQueryStmt, persistenceID)
+	row, err := d.dotSQL.QueryRowContext(ctx, d.db, latestSnapshotQueryStmt, persistenceID)
 	if err != nil {
 		return nil, err
 	}
@@ -174,7 +174,7 @@ func (d *dialect) GetJournals(
 ) ([]*Journal, error) {
 	events := make([]*Journal, 0)
 	// execute the query against the database
-	rows, err := d.dotSql.QueryContext(
+	rows, err := d.dotSQL.QueryContext(
 		ctx, d.db, readJournalQueryStmt, persistenceID, fromSequenceNumber, toSequenceNumber)
 
 	if err != nil {
@@ -205,7 +205,7 @@ func (d *dialect) GetJournals(
 // the given sequence number will be either soft deleted or hard-deleted
 func (d *dialect) DeleteSnapshots(ctx context.Context, persistenceID string, toSequenceNumber int) error {
 	// execute the query against the database
-	if _, err := d.dotSql.ExecContext(ctx, d.db, snapshotDeletionStmt, persistenceID, toSequenceNumber); err != nil {
+	if _, err := d.dotSQL.ExecContext(ctx, d.db, snapshotDeletionStmt, persistenceID, toSequenceNumber); err != nil {
 		return err
 	}
 
@@ -221,7 +221,7 @@ func (d *dialect) DeleteJournals(ctx context.Context, persistenceID string, toSe
 	}
 
 	// execute the query against the database
-	if _, err := d.dotSql.ExecContext(ctx, d.db, stmt, persistenceID, toSequenceNumber); err != nil {
+	if _, err := d.dotSQL.ExecContext(ctx, d.db, stmt, persistenceID, toSequenceNumber); err != nil {
 		return err
 	}
 

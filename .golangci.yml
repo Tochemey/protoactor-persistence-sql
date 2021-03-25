@@ -1,0 +1,16 @@
+run:
+  skip-dirs:
+    - gen
+    - mocks
+    - vendor
+  tests: false
+
+linters:
+  disable-all: true
+  enable:
+    - golint
+    - gosec
+    - gocyclo
+    - goimports
+    - gofmt
+    - whitespace

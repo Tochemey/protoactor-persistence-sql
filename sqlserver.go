@@ -1,7 +1,7 @@
 package persistence
 
 const (
-	sqlServerSql = `
+	sqlServerSQL = `
 		-- name: create-journal-table
 		IF NOT EXISTS(SELECT 1
 		              FROM sys.objects

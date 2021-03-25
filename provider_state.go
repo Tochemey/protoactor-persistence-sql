@@ -7,14 +7,14 @@ import (
 	"github.com/golang/protobuf/proto"
 )
 
-type SqlProviderState struct {
-	*SqlProvider
+type SQLProviderState struct {
+	*SQLProvider
 	wg sync.WaitGroup
 }
 
 // GetSnapshot fetches the latest snapshot of a given persistenceID represented by the actorName
 // actorName is the persistenceID
-func (s *SqlProviderState) GetSnapshot(actorName string) (snapshot interface{}, eventIndex int, ok bool) {
+func (s *SQLProviderState) GetSnapshot(actorName string) (snapshot interface{}, eventIndex int, ok bool) {
 	record, err := s.dialect.GetLatestSnapshot(s.ctx, actorName)
 	if err != nil {
 		log.Fatalf("error fetching snapshot: %v", err)
@@ -28,8 +28,10 @@ func (s *SqlProviderState) GetSnapshot(actorName string) (snapshot interface{}, 
 // actorName is the persistenceID
 // snapshotIndex is the sequenceNumber of the snapshot data
 // snapshot is the payload to persist
-func (s *SqlProviderState) PersistSnapshot(actorName string, snapshotIndex int, snapshot proto.Message) {
-	newSnapshot := NewSnapshot(actorName, snapshot, snapshotIndex, s.writer.Id)
+func (s *SQLProviderState) PersistSnapshot(actorName string, snapshotIndex int, snapshot proto.Message) {
+	// let us convert the v1 proto to a v2 proto message
+
+	newSnapshot := NewSnapshot(actorName, proto.MessageV2(snapshot), snapshotIndex, s.writer.Id)
 	if err := s.dialect.PersistSnapshot(s.ctx, newSnapshot); err != nil {
 		log.Fatalf(
 			"error: %v persisting snapshot: %s for persistenceID: %s", err, newSnapshot.SnapshotManifest, actorName,
@@ -40,7 +42,7 @@ func (s *SqlProviderState) PersistSnapshot(actorName string, snapshotIndex int, 
 // DeleteSnapshots deletes snapshots for a given persistenceID from the store to a given sequenceNumber.
 // actorName is the persistenceID
 // inclusiveToIndex is the sequenceNumber
-func (s *SqlProviderState) DeleteSnapshots(actorName string, inclusiveToIndex int) {
+func (s *SQLProviderState) DeleteSnapshots(actorName string, inclusiveToIndex int) {
 	if err := s.dialect.DeleteSnapshots(s.ctx, actorName, inclusiveToIndex); err != nil {
 		log.Fatalf("error deleting snapshots: %v for persistenceID: %s", err, actorName)
 	}
@@ -50,7 +52,7 @@ func (s *SqlProviderState) DeleteSnapshots(actorName string, inclusiveToIndex in
 // actorName is the persistenceID
 // eventIndexStart is the from sequenceNumber
 // eventIndexEnd is the to sequenceNumber
-func (s *SqlProviderState) GetEvents(
+func (s *SQLProviderState) GetEvents(
 	actorName string, eventIndexStart int, eventIndexEnd int, callback func(e interface{}),
 ) {
 	events, err := s.dialect.GetJournals(s.ctx, actorName, eventIndexStart, eventIndexEnd)
@@ -67,8 +69,8 @@ func (s *SqlProviderState) GetEvents(
 // actorName is the persistenceID
 // eventIndex is the event to persist sequenceNumber
 // event is the event payload
-func (s *SqlProviderState) PersistEvent(actorName string, eventIndex int, event proto.Message) {
-	journal := NewJournal(actorName, event, eventIndex, s.writer.Id)
+func (s *SQLProviderState) PersistEvent(actorName string, eventIndex int, event proto.Message) {
+	journal := NewJournal(actorName, proto.MessageV2(event), eventIndex, s.writer.Id)
 	if err := s.dialect.PersistJournal(s.ctx, journal); err != nil {
 		log.Fatalf("error: %v persisting event: %s for persistenceID: %s", err, journal.EventManifest, actorName)
 	}
@@ -77,18 +79,18 @@ func (s *SqlProviderState) PersistEvent(actorName string, eventIndex int, event 
 // DeleteEvents deletes events from journal to a given index
 // actorName is the persistenceID
 // inclusiveToIndex is the sequence Number
-func (s *SqlProviderState) DeleteEvents(actorName string, inclusiveToIndex int) {
+func (s *SQLProviderState) DeleteEvents(actorName string, inclusiveToIndex int) {
 	if err := s.dialect.DeleteJournals(s.ctx, actorName, inclusiveToIndex, s.cfg.LogicalDeletion); err != nil {
 		log.Fatalf("error deleting events: %v for persistenceID: %s", err, actorName)
 	}
 }
 
-func (s *SqlProviderState) Restart() {
+func (s *SQLProviderState) Restart() {
 	// let us wait for any pending  writes to complete
 	s.wg.Wait()
 }
 
 // GetSnapshotInterval return the snapshot interval
-func (s *SqlProviderState) GetSnapshotInterval() int {
+func (s *SQLProviderState) GetSnapshotInterval() int {
 	return s.cfg.SnapshotInterval
 }

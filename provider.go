@@ -8,16 +8,16 @@ import (
 	"github.com/AsynkronIT/protoactor-go/persistence"
 )
 
-type SqlProvider struct {
+type SQLProvider struct {
 	writer  *actor.PID
-	dialect SqlDialect
+	dialect SQLDialect
 
 	ctx context.Context
 	cfg Option
 }
 
-// NewSqlProvider creates a new instance of the SqlProvider
-func NewSqlProvider(ctx context.Context, actorSystem *actor.ActorSystem, dialect SqlDialect, option Option) *SqlProvider {
+// NewSQLProvider creates a new instance of the SQLProvider
+func NewSQLProvider(ctx context.Context, actorSystem *actor.ActorSystem, dialect SQLDialect, option Option) *SQLProvider {
 	// let us get the sql dialect connected
 	if err := dialect.Connect(ctx); err != nil {
 		log.Fatalf("error connecting: %v", err)
@@ -32,7 +32,7 @@ func NewSqlProvider(ctx context.Context, actorSystem *actor.ActorSystem, dialect
 	pid := actorSystem.Root.Spawn(actor.PropsFromFunc(newWriter()))
 
 	// create a new instance of the SqlProvider and returns it
-	return &SqlProvider{
+	return &SQLProvider{
 		writer:  pid,
 		dialect: dialect,
 		ctx:     ctx,
@@ -40,8 +40,8 @@ func NewSqlProvider(ctx context.Context, actorSystem *actor.ActorSystem, dialect
 	}
 }
 
-func (p *SqlProvider) GetState() persistence.ProviderState {
-	return &SqlProviderState{
-		SqlProvider: p,
+func (p *SQLProvider) GetState() persistence.ProviderState {
+	return &SQLProviderState{
+		SQLProvider: p,
 	}
 }

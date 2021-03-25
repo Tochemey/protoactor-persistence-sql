@@ -1,0 +1,27 @@
+os: linux
+dist: xenial
+
+before_install:
+  - docker login --username "$DOCKERHUB_USERNAME" --password "$DOCKERHUB_TOKEN"
+
+install:
+  - sudo /bin/sh -c 'wget https://github.com/earthly/earthly/releases/download/v0.5.8/earthly-linux-amd64 -O /usr/local/bin/earthly && chmod +x /usr/local/bin/earthly'
+
+stages:
+  - test
+
+env:
+  global:
+    - COMMIT_HASH=$TRAVIS_COMMIT
+    - BRANCH_NAME=$TRAVIS_BRANCH
+    - BUILD_NUMBER=$TRAVIS_BUILD_NUMBER
+    - CODECOV_TOKEN=$CODECOV_TOKEN
+    - EARTHLY_BUILD_ARGS="BRANCH_NAME,COMMIT_HASH"
+    - EARTHLY_SECRETS="CODECOV_TOKEN"
+
+jobs:
+  include:
+    - stage: test
+      script:
+        - earthly --version
+        - earthly -P  +all

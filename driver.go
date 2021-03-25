@@ -17,7 +17,7 @@ const (
 // IsValid checks whether the given driver is valid or not
 func (d Driver) IsValid() error {
 	switch d {
-	case POSTGRES, MYSQL, ORACLE, SQLSERVER:
+	case POSTGRES, MYSQL, SQLSERVER, ORACLE:
 		return nil
 	}
 	return errors.New("invalid driver type")
@@ -25,6 +25,9 @@ func (d Driver) IsValid() error {
 
 // String returns the actual value
 func (d Driver) String() string {
+	if err := d.IsValid(); err != nil {
+		return ""
+	}
 	return string(d)
 }
 
@@ -46,20 +49,23 @@ func (d Driver) ConnStr(dbHost string, dbPort int, dbName, dbUser, dbPassword, d
 		connectionInfo = fmt.Sprintf(
 			"%s:%s@tcp(%s:%v)/%s", dbUser, dbPassword, dbHost, dbPort, dbName,
 		)
+	case SQLSERVER:
+		connectionInfo = fmt.Sprintf("server=%s;user id=%s;password=%s;port=%d;database=%s;",
+			dbHost, dbUser, dbPassword, dbPort, dbName)
 	}
 
 	return connectionInfo
 }
 
-// SchemaSql returns the sql file to create schema for a given driver
-func (d Driver) SchemaSql() string {
+// SchemaFile returns the sql file to create schema for a given driver
+func (d Driver) SchemaFile() string {
 	switch d {
 	case POSTGRES:
-		return postgresSql
+		return postgresSQL
 	case MYSQL:
-		return mysqlSql
+		return mysqlSQL
 	case SQLSERVER:
-		return sqlServerSql
+		return sqlServerSQL
 	}
 
 	return ""

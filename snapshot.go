@@ -4,7 +4,8 @@ import (
 	"log"
 	"time"
 
-	"github.com/golang/protobuf/proto"
+	"google.golang.org/protobuf/proto"
+
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/reflect/protoregistry"
 	"google.golang.org/protobuf/types/dynamicpb"
@@ -21,14 +22,14 @@ type Snapshot struct {
 	// This snapshot message's payload.
 	Snapshot []byte
 	// A type hint for the snapshot. This will be the proto message name of the snapshot
-	SnapshotManifest string
+	SnapshotManifest protoreflect.FullName
 	// Unique identifier of the writing persistent actor.
 	WriterID string
 }
 
 // NewSnapshot creates a new instance of Snapshot
 func NewSnapshot(persistenceID string, message proto.Message, sequenceNumber int, writerID string) *Snapshot {
-	manifest := protoreflect.MessageDescriptor.FullName(message)
+	manifest := message.ProtoReflect().Descriptor().FullName()
 	bytes, err := proto.Marshal(message)
 	if err != nil {
 		log.Fatal(err)
@@ -39,13 +40,13 @@ func NewSnapshot(persistenceID string, message proto.Message, sequenceNumber int
 		SequenceNumber:   sequenceNumber,
 		Timestamp:        time.Now().UTC(),
 		Snapshot:         bytes,
-		SnapshotManifest: string(manifest),
+		SnapshotManifest: manifest,
 		WriterID:         writerID,
 	}
 }
 
 func (snapshot *Snapshot) message() proto.Message {
-	t, err := protoregistry.GlobalTypes.FindMessageByName(protoreflect.FullName(snapshot.SnapshotManifest))
+	t, err := protoregistry.GlobalTypes.FindMessageByName(snapshot.SnapshotManifest)
 	if err != nil {
 		log.Fatal(err)
 	}

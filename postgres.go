@@ -1,6 +1,6 @@
 package persistence
 
-const postgresSql = `
+const postgresSQL = `
 		-- name: create-journal-table
 		CREATE TABLE IF NOT EXISTS journal
 		(
