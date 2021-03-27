@@ -17,7 +17,9 @@ type SQLProvider struct {
 }
 
 // NewSQLProvider creates a new instance of the SQLProvider
-func NewSQLProvider(ctx context.Context, actorSystem *actor.ActorSystem, dialect SQLDialect, option Option) *SQLProvider {
+func NewSQLProvider(
+	ctx context.Context, actorSystem *actor.ActorSystem, dialect SQLDialect, option Option,
+) *SQLProvider {
 	// let us get the sql dialect connected
 	if err := dialect.Connect(ctx); err != nil {
 		log.Fatalf("error connecting: %v", err)

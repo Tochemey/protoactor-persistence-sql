@@ -43,7 +43,7 @@ func (d Driver) ConnStr(dbHost string, dbPort int, dbName, dbUser, dbPassword, d
 	switch d {
 	case POSTGRES:
 		connectionInfo = fmt.Sprintf(
-			"host=%s port=%d user=%s dbName=%s sslmode=disable search_path=%s", dbHost, dbPort, dbUser, dbName,
+			"host=%s port=%d user=%s dbname=%s sslmode=disable search_path=%s", dbHost, dbPort, dbUser, dbName,
 			dbSchema,
 		)
 		// The POSTGRES driver gets confused in cases where the user has no password
@@ -56,15 +56,17 @@ func (d Driver) ConnStr(dbHost string, dbPort int, dbName, dbUser, dbPassword, d
 			"%s:%s@tcp(%s:%v)/%s", dbUser, dbPassword, dbHost, dbPort, dbName,
 		)
 	case SQLSERVER:
-		connectionInfo = fmt.Sprintf("server=%s;user id=%s;password=%s;port=%d;database=%s;",
-			dbHost, dbUser, dbPassword, dbPort, dbName)
+		connectionInfo = fmt.Sprintf(
+			"server=%s;user id=%s;password=%s;port=%d;database=%s;",
+			dbHost, dbUser, dbPassword, dbPort, dbName,
+		)
 	}
 
 	return connectionInfo
 }
 
-// SchemaFile returns the sql file to create schema for a given driver
-func (d Driver) SchemaFile() string {
+// SqlFile returns the sql file to create schema for a given driver
+func (d Driver) SqlFile() string {
 	switch d {
 	case POSTGRES:
 		return postgresSQL

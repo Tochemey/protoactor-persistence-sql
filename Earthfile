@@ -1,6 +1,7 @@
 # Earthfile
 
-FROM golang:1.15.10-buster
+FROM golang:1.16.2-buster
+
 WORKDIR /app
 
 all:
@@ -19,14 +20,17 @@ code:
 vendor:
 	FROM +code
 
-	# install dependencies (using host machine ssh context)
 	RUN go mod vendor
 	SAVE ARTIFACT /app /files
 
+
 test:
 	COPY +vendor/files ./
-	RUN go test -mod=vendor -v ./... -coverprofile=coverage.out
-	SAVE IMAGE
+
+	WITH DOCKER --pull postgres --pull mysql
+       RUN go test -mod=vendor -v ./... -coverprofile=coverage.out
+    END
+
 	SAVE ARTIFACT ./coverage.out AS LOCAL ./coverage.out
 
 coverage:
@@ -36,6 +40,7 @@ coverage:
 	ARG BRANCH_NAME=""
 	ARG BUILD_NUMBER=""
 	ARG CODECOV_TOKEN=""
+
 	RUN curl -s https://codecov.io/bash > ./codecov.sh && chmod +x ./codecov.sh
 	RUN ./codecov.sh -t "${CODECOV_TOKEN}" -B "${BRANCH_NAME}" -C "${COMMIT_HASH}" -b "${BUILD_NUMBER}"
 

@@ -62,16 +62,16 @@ type dialect struct {
 }
 
 // NewDialect creates a new instance of SQLDialect
-func NewDialect(config Config, driver Driver) SQLDialect {
+func NewDialect(config Config, driver Driver) (SQLDialect, error) {
 	// validates driver
 	if err := driver.IsValid(); err != nil {
-		log.Fatalf("error: %v", err)
+		return nil, err
 	}
 
 	return &dialect{
 		config: config,
 		driver: driver,
-	}
+	}, nil
 }
 
 // CreateSchemasIfNotExist creates the database tables required
@@ -102,13 +102,13 @@ func (d *dialect) Connect(ctx context.Context) error {
 		log.Fatalf("error opening database connection: %v", err)
 	}
 
-	err = d.db.PingContext(ctx)
+	err = db.PingContext(ctx)
 	if err != nil {
 		return err
 	}
 
 	// Loads sql statements
-	dot, err := dotsql.LoadFromString(d.driver.SchemaFile())
+	dot, err := dotsql.LoadFromString(d.driver.SqlFile())
 	if err != nil {
 		return err
 	}
@@ -158,8 +158,10 @@ func (d *dialect) GetLatestSnapshot(ctx context.Context, persistenceID string) (
 
 	// let us read the data that has been returned by the query
 	var snapshot Snapshot
-	err = row.Scan(&snapshot.PersistenceID, &snapshot.SequenceNumber, &snapshot.Timestamp,
-		&snapshot.Snapshot, &snapshot.SnapshotManifest, &snapshot.WriterID)
+	err = row.Scan(
+		&snapshot.PersistenceID, &snapshot.SequenceNumber, &snapshot.Timestamp,
+		&snapshot.Snapshot, &snapshot.SnapshotManifest, &snapshot.WriterID,
+	)
 
 	if err != nil {
 		return nil, err
@@ -175,7 +177,8 @@ func (d *dialect) GetJournals(
 	events := make([]*Journal, 0)
 	// execute the query against the database
 	rows, err := d.dotSQL.QueryContext(
-		ctx, d.db, readJournalQueryStmt, persistenceID, fromSequenceNumber, toSequenceNumber)
+		ctx, d.db, readJournalQueryStmt, persistenceID, fromSequenceNumber, toSequenceNumber,
+	)
 
 	if err != nil {
 		return nil, err
@@ -185,8 +188,10 @@ func (d *dialect) GetJournals(
 	var journal Journal
 	for rows.Next() {
 		// read the row data
-		if err = rows.Scan(&journal.Ordering, &journal.PersistenceID, &journal.SequenceNumber, &journal.Timestamp,
-			&journal.Payload, &journal.EventManifest, &journal.WriterID, &journal.Deleted); err != nil {
+		if err = rows.Scan(
+			&journal.Ordering, &journal.PersistenceID, &journal.SequenceNumber, &journal.Timestamp,
+			&journal.Payload, &journal.EventManifest, &journal.WriterID, &journal.Deleted,
+		); err != nil {
 			return nil, err
 		}
 
