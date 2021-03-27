@@ -3,6 +3,7 @@ package persistence
 import (
 	"context"
 	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/ory/dockertest/v3"
@@ -64,9 +65,9 @@ func TestPostgresTestSuite(t *testing.T) {
 
 func (s *PostgresTestSuite) TestConnect() {
 	testCases := map[string]struct {
-		config Config
-		driver Driver
-		err    error
+		config  Config
+		driver  Driver
+		errMesg string
 	}{
 		"happy path": {
 			config: Config{
@@ -77,8 +78,32 @@ func (s *PostgresTestSuite) TestConnect() {
 				DBSchema:   "public",
 				DBName:     "testdb",
 			},
-			driver: POSTGRES,
-			err:    nil,
+			driver:  POSTGRES,
+			errMesg: "",
+		},
+		"database does not exist": {
+			config: Config{
+				DBHost:     "localhost",
+				DBPort:     s.containerPort,
+				DBUser:     "test",
+				DBPassword: "test",
+				DBSchema:   "public",
+				DBName:     "test",
+			},
+			driver:  POSTGRES,
+			errMesg: "database \"test\" does not exist",
+		},
+		"invalid authentication": {
+			config: Config{
+				DBHost:     "localhost",
+				DBPort:     s.containerPort,
+				DBUser:     "some-username",
+				DBPassword: "test",
+				DBSchema:   "public",
+				DBName:     "testdb",
+			},
+			driver:  POSTGRES,
+			errMesg: "password authentication failed for user \"some-username\"",
 		},
 	}
 
@@ -97,7 +122,12 @@ func (s *PostgresTestSuite) TestConnect() {
 					},
 				)
 
-				s.Assert().Equal(testCase.err, err)
+				if testCase.errMesg != "" {
+					s.Assert().NotNil(err)
+					s.Assert().True(strings.Contains(err.Error(), testCase.errMesg))
+				} else {
+					s.Assert().NoError(err)
+				}
 			},
 		)
 	}
