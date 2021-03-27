@@ -160,8 +160,8 @@ func (s *DriverTestSuite) TestSchemaFile() {
 	for name, testCase := range testCases {
 		s.Run(
 			name, func() {
-				if got := testCase.driver.SqlFile(); got != testCase.expected {
-					s.T().Errorf("SqlFile() = %v, expected %v", got, testCase.expected)
+				if got := testCase.driver.SQLFile(); got != testCase.expected {
+					s.T().Errorf("SQLFile() = %v, expected %v", got, testCase.expected)
 				}
 			},
 		)

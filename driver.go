@@ -65,8 +65,8 @@ func (d Driver) ConnStr(dbHost string, dbPort int, dbName, dbUser, dbPassword, d
 	return connectionInfo
 }
 
-// SqlFile returns the sql file to create schema for a given driver
-func (d Driver) SqlFile() string {
+// SQLFile returns the sql file to create schema for a given driver
+func (d Driver) SQLFile() string {
 	switch d {
 	case POSTGRES:
 		return postgresSQL

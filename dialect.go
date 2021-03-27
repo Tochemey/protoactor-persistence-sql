@@ -108,7 +108,7 @@ func (d *dialect) Connect(ctx context.Context) error {
 	}
 
 	// Loads sql statements
-	dot, err := dotsql.LoadFromString(d.driver.SqlFile())
+	dot, err := dotsql.LoadFromString(d.driver.SQLFile())
 	if err != nil {
 		return err
 	}
