@@ -2,21 +2,9 @@ package persistence
 
 import (
 	"testing"
-
-	"github.com/stretchr/testify/suite"
 )
 
-type DriverTestSuite struct {
-	suite.Suite
-}
-
-func (s *DriverTestSuite) SetupTest() {}
-
-func TestDriverTestSuite(t *testing.T) {
-	suite.Run(t, new(DriverTestSuite))
-}
-
-func (s *DriverTestSuite) TestConnectionString() {
+func TestConnectionString(t *testing.T) {
 	type dbConfig struct {
 		dbHost     string
 		dbPort     int
@@ -41,7 +29,7 @@ func (s *DriverTestSuite) TestConnectionString() {
 				dbPassword: "test",
 				dbSchema:   "public",
 			},
-			expected: "host=localhost dbPort=5432 user=test dbname=postgres sslmode=disable search_path=public password=test",
+			expected: "host=localhost port=5432 user=test dbname=postgres sslmode=disable search_path=public password=test",
 		},
 		// asserting mysql connection string
 		"mysql connection string": {
@@ -49,11 +37,11 @@ func (s *DriverTestSuite) TestConnectionString() {
 			config: dbConfig{
 				dbHost:     "localhost",
 				dbPort:     3306,
-				dbName:     "db",
+				dbName:     "pg",
 				dbUser:     "root",
 				dbPassword: "test",
 			},
-			expected: "root:test@tcp(localhost:3306)/db",
+			expected: "root:test@tcp(localhost:3306)/pg",
 		},
 		// asserting sql server connection string
 		"sqlserver connection string": {
@@ -65,11 +53,11 @@ func (s *DriverTestSuite) TestConnectionString() {
 				dbUser:     "sa",
 				dbPassword: "test",
 			},
-			expected: "server=localhost;user id=sa;password=test;dbPort=1433;database=tests;",
+			expected: "server=localhost;user id=sa;password=test;port=1433;database=tests;",
 		},
 		// asserting that unknown driver type will return empty string
 		"not yet supported driver": {
-			driver:   ORACLE,
+			driver:   "ORACLE",
 			config:   dbConfig{},
 			expected: "",
 		},
@@ -77,20 +65,20 @@ func (s *DriverTestSuite) TestConnectionString() {
 
 	// run the test cases
 	for name, testCase := range testCases {
-		s.Run(
-			name, func() {
+		t.Run(
+			name, func(t *testing.T) {
 				if got := testCase.driver.ConnStr(
 					testCase.config.dbHost, testCase.config.dbPort, testCase.config.dbName, testCase.config.dbUser,
 					testCase.config.dbPassword, testCase.config.dbSchema,
 				); got != testCase.expected {
-					s.T().Errorf("ConnStr() = %v, expected %v", got, testCase.expected)
+					t.Errorf("ConnStr() = %v, expected %v", got, testCase.expected)
 				}
 			},
 		)
 	}
 }
 
-func (s *DriverTestSuite) TestIsValid() {
+func TestIsValid(t *testing.T) {
 	testCases := map[string]struct {
 		driver    Driver
 		expectErr bool
@@ -112,8 +100,8 @@ func (s *DriverTestSuite) TestIsValid() {
 		},
 		// asserting that oracle is driver type
 		"oracle": {
-			driver:    ORACLE,
-			expectErr: false,
+			driver:    "ORACLE",
+			expectErr: true,
 		},
 		"unknown": {
 			driver:    "DB2",
@@ -121,17 +109,17 @@ func (s *DriverTestSuite) TestIsValid() {
 		},
 	}
 	for name, testCase := range testCases {
-		s.Run(
-			name, func() {
+		t.Run(
+			name, func(t *testing.T) {
 				if err := testCase.driver.IsValid(); (err != nil) != testCase.expectErr {
-					s.T().Errorf("IsValid() error = %v, expectErr %v", err, testCase.expectErr)
+					t.Errorf("IsValid() error = %v, expectErr %v", err, testCase.expectErr)
 				}
 			},
 		)
 	}
 }
 
-func (s *DriverTestSuite) TestSchemaFile() {
+func TestSchemaFile(t *testing.T) {
 	testCases := map[string]struct {
 		driver   Driver
 		expected string
@@ -158,10 +146,10 @@ func (s *DriverTestSuite) TestSchemaFile() {
 		},
 	}
 	for name, testCase := range testCases {
-		s.Run(
-			name, func() {
+		t.Run(
+			name, func(t *testing.T) {
 				if got := testCase.driver.SQLFile(); got != testCase.expected {
-					s.T().Errorf("SQLFile() = %v, expected %v", got, testCase.expected)
+					t.Errorf("SQLFile() = %v, expected %v", got, testCase.expected)
 				}
 			},
 		)
@@ -169,7 +157,7 @@ func (s *DriverTestSuite) TestSchemaFile() {
 
 }
 
-func (s *DriverTestSuite) TestDriverString() {
+func TestDriverString(t *testing.T) {
 	testCases := map[string]struct {
 		driver   Driver
 		expected string
@@ -187,8 +175,8 @@ func (s *DriverTestSuite) TestDriverString() {
 			expected: "sqlserver",
 		},
 		"oracle": {
-			driver:   ORACLE,
-			expected: "oracle",
+			driver:   "ORACLE",
+			expected: "",
 		},
 		"unknown": {
 			driver:   "DB2",
@@ -196,10 +184,10 @@ func (s *DriverTestSuite) TestDriverString() {
 		},
 	}
 	for name, testCase := range testCases {
-		s.Run(
-			name, func() {
+		t.Run(
+			name, func(t *testing.T) {
 				if got := testCase.driver.String(); got != testCase.expected {
-					s.T().Errorf("String() = %v, expected %v", got, testCase.expected)
+					t.Errorf("String() = %v, expected %v", got, testCase.expected)
 				}
 			},
 		)

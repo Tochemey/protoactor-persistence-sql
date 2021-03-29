@@ -1,76 +1,64 @@
 package persistence
 
 import (
-	"context"
 	"errors"
 	"testing"
 
-	"github.com/stretchr/testify/suite"
+	"github.com/stretchr/testify/assert"
 )
 
-type DialectTestSuite struct {
-	suite.Suite
-
-	ctx context.Context
-}
-
-func (s *DialectTestSuite) SetupTest() {
-	s.ctx = context.TODO()
-}
-
-func TestDialectTestSuite(t *testing.T) {
-	suite.Run(t, new(DialectTestSuite))
-}
-
-func (s *DialectTestSuite) TestNewDialect() {
+func TestNewDialect(t *testing.T) {
 	testCases := map[string]struct {
-		config DialectConfig
+		config DBConfig
 		driver Driver
 		err    error
 	}{
 		// asserting the creation of Postgres SQLDialect
 		"postgres": {
-			config: DialectConfig{},
+			config: DBConfig{},
 			driver: POSTGRES,
 			err:    nil,
 		},
 		// asserting the creation of MySQL SQLDialect
 		"mysql": {
-			config: DialectConfig{},
+			config: DBConfig{},
 			driver: MYSQL,
 			err:    nil,
 		},
 		// asserting the creation of SQL Server SQLDialect
 		"sqlserver": {
-			config: DialectConfig{},
+			config: DBConfig{},
 			driver: SQLSERVER,
 			err:    nil,
 		},
 		// asserting the creation of Oracle SQLDialect
 		"oracle": {
-			config: DialectConfig{},
-			driver: ORACLE,
-			err:    nil,
+			config: DBConfig{},
+			driver: "ORACLE",
+			err:    errors.New("invalid driver type"),
 		},
 		// asserting unknown driver type
 		"unknown": {
-			config: DialectConfig{},
+			config: DBConfig{},
 			driver: "unknown",
 			err:    errors.New("invalid driver type"),
 		},
 	}
 
 	for name, testCase := range testCases {
-		s.Run(
-			name, func() {
+		t.Run(
+			name, func(t *testing.T) {
+				// get instance of assert
+				assertions := assert.New(t)
+
 				sqlDialect, err := NewDialect(testCase.config, testCase.driver)
 
 				if testCase.err != nil {
-					s.Assert().Equal(testCase.err, err)
+					assertions.Equal(testCase.err, err)
 				} else {
-					s.Assert().NotNil(sqlDialect)
+					assertions.NotNil(sqlDialect)
 					_, ok := sqlDialect.(SQLDialect)
-					s.Assert().True(ok)
+					assertions.True(ok)
 				}
 			},
 		)

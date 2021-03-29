@@ -81,7 +81,7 @@ func (s *SQLProviderState) PersistEvent(actorName string, eventIndex int, event 
 // actorName is the persistenceID
 // inclusiveToIndex is the sequence Number
 func (s *SQLProviderState) DeleteEvents(actorName string, inclusiveToIndex int) {
-	if err := s.dialect.DeleteJournals(s.ctx, actorName, inclusiveToIndex, s.cfg.LogicalDeletion); err != nil {
+	if err := s.dialect.DeleteJournals(s.ctx, actorName, inclusiveToIndex, s.logicalDeletion); err != nil {
 		log.Fatalf("error deleting events: %v for persistenceID: %s", err, actorName)
 	}
 }
@@ -94,5 +94,5 @@ func (s *SQLProviderState) Restart() {
 
 // GetSnapshotInterval return the snapshot interval
 func (s *SQLProviderState) GetSnapshotInterval() int {
-	return s.cfg.SnapshotInterval
+	return s.snapshotInterval
 }

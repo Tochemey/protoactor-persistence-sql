@@ -1,14 +1,12 @@
-package postgres
+package mysql
 
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"fmt"
 	"log"
 	"os"
 	"strconv"
-	"strings"
 	"testing"
 
 	"github.com/ory/dockertest/v3"
@@ -19,7 +17,6 @@ import (
 
 // solely for tests
 var db *sql.DB
-var database = "testdb"
 var containerPort int
 var maxConnectionLifetime = 120
 
@@ -33,13 +30,13 @@ func TestMain(m *testing.M) {
 	// create the postgres docker resource that will be used in the suite
 	resource, err := pool.RunWithOptions(
 		&dockertest.RunOptions{
-			Repository: "postgres",
+			Repository: "mysql",
 			Tag:        "latest",
 			Env: []string{
-				"POSTGRES_USER=test",
-				"POSTGRES_PASSWORD=test",
-				"POSTGRES_DB=testdb",
-				"listen_addresses = '*'",
+				"MYSQL_ROOT_PASSWORD=test",
+				"MYSQL_USER=test",
+				"MYSQL_PASSWORD=test",
+				"MYSQL_DATABASE=testdb",
 			},
 		}, func(config *docker.HostConfig) {
 			// set AutoRemove to true so that stopped container goes away by itself
@@ -55,16 +52,13 @@ func TestMain(m *testing.M) {
 	}
 
 	// get the container port to use
-	containerPort, _ = strconv.Atoi(resource.GetPort("5432/tcp"))
+	containerPort, _ = strconv.Atoi(resource.GetPort("3306/tcp"))
 
 	if err = pool.Retry(
 		func() error {
 			var err error
 			db, err = sql.Open(
-				"postgres", fmt.Sprintf(
-					"host=localhost port=%d user=test "+
-						"password=test dbname=%s sslmode=disable", containerPort, database,
-				),
+				"mysql", fmt.Sprintf("test:test@(localhost:%s)/testdb?parseTime=true", resource.GetPort("3306/tcp")),
 			)
 			if err != nil {
 				return err
@@ -136,16 +130,17 @@ func TestConnection(t *testing.T) {
 				assertions := assert.New(t)
 
 				// create the dialect instance
-				dialect, err := NewPostgresDialect(testCase.config)
+				dialect, err := NewMySQLDialect(testCase.config)
 				assertions.NoError(err)
 				assertions.NotNil(dialect)
 
 				err = dialect.Connect(ctx)
+
 				switch testCase.expectError {
-				case false:
-					assertions.NoError(err)
-				default:
+				case true:
 					assertions.Error(err)
+				default:
+					assertions.NoError(err)
 				}
 			},
 		)
@@ -169,7 +164,7 @@ func TestJournalAndSnapshotTablesCreation(t *testing.T) {
 			// get instance of assert
 			assertions := assert.New(t)
 			// create the dialect instance
-			dialect, err := NewPostgresDialect(config)
+			dialect, err := NewMySQLDialect(config)
 			assertions.NoError(err)
 			assertions.NotNil(dialect)
 
@@ -182,10 +177,10 @@ func TestJournalAndSnapshotTablesCreation(t *testing.T) {
 			assertions.NoError(err)
 
 			// check whether both tables have been created
-			err = tableExists("public", "journal")
+			err = tableExists("testdb", "journal")
 			assertions.NoError(err)
 			assertions.Nil(err)
-			err = tableExists("public", "snapshot")
+			err = tableExists("testdb", "snapshot")
 			assertions.NoError(err)
 			assertions.Nil(err)
 		},
@@ -195,16 +190,17 @@ func TestJournalAndSnapshotTablesCreation(t *testing.T) {
 func tableExists(schema, tableName string) error {
 	var result string
 	err := db.
-		QueryRow(fmt.Sprintf("SELECT to_regclass('%s.%s');", schema, tableName)).
+		QueryRow(
+			fmt.Sprintf(
+				"SELECT table_name FROM information_schema.tables WHERE table_schema = '%s' AND table_name = '%s' LIMIT 1; ",
+				schema, tableName,
+			),
+		).
 		Scan(&result)
 	switch {
 	case err == sql.ErrNoRows, err != nil:
 		return err
 	default:
-		if strings.EqualFold(result, "null") {
-			return errors.New(fmt.Sprintf("table %s.%s does not exist", schema, tableName))
-		}
-
 		return nil
 	}
 }

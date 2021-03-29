@@ -4,8 +4,9 @@ import (
 	"context"
 	"database/sql"
 	"log"
+	"time"
 
-	_ "github.com/denisenkom/go-mssqldb" // load the mssql driver
+	_ "github.com/denisenkom/go-mssqldb" // load the sqlserver driver
 	"github.com/gchaincl/dotsql"
 	_ "github.com/go-sql-driver/mysql" // load the mysql driver
 	"github.com/hashicorp/go-multierror"
@@ -24,25 +25,29 @@ const (
 	snapshotDeletionStmt       = "delete-snapshots"
 )
 
-// DialectConfig represents the database configuration
-type DialectConfig struct {
-	dbHost     string // the datastore host name. it can be an ip address as well
-	dbPort     int    // the datastore dbPort number
-	dbUser     string // the database user name
-	dbPassword string // the database password
-	dbSchema   string // the schema when required, particular for postgres
-	dbName     string // the database name
+// DBConfig represents the database configuration
+type DBConfig struct {
+	dbHost              string // the datastore host name. it can be an ip address as well
+	dbPort              int    // the datastore dbPort number
+	dbUser              string // the database user name
+	dbPassword          string // the database password
+	dbSchema            string // the schema when required, particular for postgres
+	dbName              string // the database name
+	dbConnectionMaxLife int
 }
 
-// NewDialectConfig creates an instance of DialectConfig
-func NewDialectConfig(dbUser, dbPassword, dbName, dbSchema, dbHost string, dbPort int) DialectConfig {
-	return DialectConfig{
-		dbHost:     dbHost,
-		dbPort:     dbPort,
-		dbUser:     dbUser,
-		dbPassword: dbPassword,
-		dbSchema:   dbSchema,
-		dbName:     dbName,
+// NewDBConfig creates an instance of DBConfig
+func NewDBConfig(
+	dbUser, dbPassword, dbName, dbSchema, dbHost string, dbPort, dbConnectionMaxLife int,
+) DBConfig {
+	return DBConfig{
+		dbHost:              dbHost,
+		dbPort:              dbPort,
+		dbUser:              dbUser,
+		dbPassword:          dbPassword,
+		dbSchema:            dbSchema,
+		dbName:              dbName,
+		dbConnectionMaxLife: dbConnectionMaxLife,
 	}
 }
 
@@ -66,7 +71,7 @@ type SQLDialect interface {
 }
 
 type dialect struct {
-	config DialectConfig
+	config DBConfig
 	db     *sql.DB
 
 	driver Driver
@@ -74,7 +79,7 @@ type dialect struct {
 }
 
 // NewDialect creates a new instance of SQLDialect
-func NewDialect(config DialectConfig, driver Driver) (SQLDialect, error) {
+func NewDialect(config DBConfig, driver Driver) (SQLDialect, error) {
 	// validates driver
 	if err := driver.IsValid(); err != nil {
 		return nil, err
@@ -113,6 +118,10 @@ func (d *dialect) Connect(ctx context.Context) error {
 	if err != nil {
 		log.Fatalf("error opening database connection: %v", err)
 	}
+
+	// set some critical database settings
+	db.SetConnMaxLifetime(time.Duration(d.config.dbConnectionMaxLife) * time.Second)
+	db.SetMaxIdleConns(0)
 
 	err = db.PingContext(ctx)
 	if err != nil {
