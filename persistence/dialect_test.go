@@ -24,37 +24,37 @@ func TestDialectTestSuite(t *testing.T) {
 
 func (s *DialectTestSuite) TestNewDialect() {
 	testCases := map[string]struct {
-		config Config
+		config DialectConfig
 		driver Driver
 		err    error
 	}{
 		// asserting the creation of Postgres SQLDialect
 		"postgres": {
-			config: Config{},
+			config: DialectConfig{},
 			driver: POSTGRES,
 			err:    nil,
 		},
 		// asserting the creation of MySQL SQLDialect
 		"mysql": {
-			config: Config{},
+			config: DialectConfig{},
 			driver: MYSQL,
 			err:    nil,
 		},
 		// asserting the creation of SQL Server SQLDialect
 		"sqlserver": {
-			config: Config{},
+			config: DialectConfig{},
 			driver: SQLSERVER,
 			err:    nil,
 		},
 		// asserting the creation of Oracle SQLDialect
 		"oracle": {
-			config: Config{},
+			config: DialectConfig{},
 			driver: ORACLE,
 			err:    nil,
 		},
 		// asserting unknown driver type
 		"unknown": {
-			config: Config{},
+			config: DialectConfig{},
 			driver: "unknown",
 			err:    errors.New("invalid driver type"),
 		},

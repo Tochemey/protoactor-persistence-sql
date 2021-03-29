@@ -41,7 +41,7 @@ func (s *DriverTestSuite) TestConnectionString() {
 				dbPassword: "test",
 				dbSchema:   "public",
 			},
-			expected: "host=localhost port=5432 user=test dbname=postgres sslmode=disable search_path=public password=test",
+			expected: "host=localhost dbPort=5432 user=test dbname=postgres sslmode=disable search_path=public password=test",
 		},
 		// asserting mysql connection string
 		"mysql connection string": {
@@ -65,7 +65,7 @@ func (s *DriverTestSuite) TestConnectionString() {
 				dbUser:     "sa",
 				dbPassword: "test",
 			},
-			expected: "server=localhost;user id=sa;password=test;port=1433;database=tests;",
+			expected: "server=localhost;user id=sa;password=test;dbPort=1433;database=tests;",
 		},
 		// asserting that unknown driver type will return empty string
 		"not yet supported driver": {

@@ -24,14 +24,26 @@ const (
 	snapshotDeletionStmt       = "delete-snapshots"
 )
 
-// Config represents the database configuration
-type Config struct {
-	DBHost     string // the datastore host name. it can be an ip address as well
-	DBPort     int    // the datastore port number
-	DBUser     string // the database user name
-	DBPassword string // the database password
-	DBSchema   string // the schema when required, particular for postgres
-	DBName     string // the database name
+// DialectConfig represents the database configuration
+type DialectConfig struct {
+	dbHost     string // the datastore host name. it can be an ip address as well
+	dbPort     int    // the datastore dbPort number
+	dbUser     string // the database user name
+	dbPassword string // the database password
+	dbSchema   string // the schema when required, particular for postgres
+	dbName     string // the database name
+}
+
+// NewDialectConfig creates an instance of DialectConfig
+func NewDialectConfig(dbUser, dbPassword, dbName, dbSchema, dbHost string, dbPort int) DialectConfig {
+	return DialectConfig{
+		dbHost:     dbHost,
+		dbPort:     dbPort,
+		dbUser:     dbUser,
+		dbPassword: dbPassword,
+		dbSchema:   dbSchema,
+		dbName:     dbName,
+	}
 }
 
 // SQLDialect will be implemented any database dialect
@@ -54,7 +66,7 @@ type SQLDialect interface {
 }
 
 type dialect struct {
-	config Config
+	config DialectConfig
 	db     *sql.DB
 
 	driver Driver
@@ -62,7 +74,7 @@ type dialect struct {
 }
 
 // NewDialect creates a new instance of SQLDialect
-func NewDialect(config Config, driver Driver) (SQLDialect, error) {
+func NewDialect(config DialectConfig, driver Driver) (SQLDialect, error) {
 	// validates driver
 	if err := driver.IsValid(); err != nil {
 		return nil, err
@@ -93,7 +105,7 @@ func (d *dialect) CreateSchemasIfNotExist(ctx context.Context) error {
 func (d *dialect) Connect(ctx context.Context) error {
 	// get the connection string provided by the driver
 	connStr := d.driver.ConnStr(
-		d.config.DBHost, d.config.DBPort, d.config.DBName, d.config.DBUser, d.config.DBPassword, d.config.DBSchema,
+		d.config.dbHost, d.config.dbPort, d.config.dbName, d.config.dbUser, d.config.dbPassword, d.config.dbSchema,
 	)
 
 	// Open the database connection
