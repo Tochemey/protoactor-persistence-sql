@@ -1,4 +1,4 @@
-package persistence
+package persistencesql
 
 import (
 	"github.com/AsynkronIT/protoactor-go/actor"

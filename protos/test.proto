@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package persistence;
+
+option go_package = ".;persistence";
+
+// AccountOpened is used in tests
+message AccountOpened{
+  string account_number = 1;
+  float balance = 2;
+}
+
+// Account represents the state to persist as snapshot
+message Account {
+  string account_number = 1;
+  float actual_balance = 2;
+}

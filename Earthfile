@@ -16,6 +16,7 @@ code:
 
 	# copy in code
 	COPY -dir ./ ./
+	COPY -dir +protogen/gen ./
 
 vendor:
 	FROM +code
@@ -52,3 +53,17 @@ lint:
 
     # Runs golangci-lint with settings:
 	RUN golangci-lint run -v
+
+protogen:
+	FROM namely/protoc-all:1.34_0
+
+	ARG OUT="gen"
+    ENV OUT=${OUT}
+
+	COPY -dir protos /defs
+
+	ARG GENERATE = entrypoint.sh --no-google-includes -l go -o ./${OUT}
+
+	RUN ${GENERATE} -i protos -d protos
+
+    SAVE ARTIFACT /defs/gen / AS LOCAL ${OUT}
