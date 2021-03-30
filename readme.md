@@ -13,12 +13,10 @@ sql datastore.
 The following sql-based datastore are supported out-of-the-box:
 
 - MySQL
-- Microsoft SQLServer
+- SQLServer
 - Postgres
 
 ## TODOs
 
 - [ ] Documentation
-- [ ] More unit tests
-- [ ] Code cleanup
 - [ ] Cut an official release tag
