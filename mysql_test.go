@@ -2,17 +2,18 @@ package persistencesql
 
 import (
 	"context"
-	"database/sql"
-	"fmt"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+	pb "github.com/tochemey/protoactor-persistence-sql/gen"
+	"google.golang.org/protobuf/proto"
 )
 
 func TestMySQLConnection(t *testing.T) {
 	ctx := context.TODO()
 	testCases := map[string]struct {
-		config      DBConfig
+		config      *DBConfig
 		expectError bool
 	}{
 		"valid connection settings": {
@@ -23,7 +24,7 @@ func TestMySQLConnection(t *testing.T) {
 				"public",
 				"localhost",
 				mysqlContainerPort,
-				maxConnectionLifetime,
+				WithConnectionMaxLife(maxConnectionLifetime),
 			),
 			expectError: false,
 		},
@@ -35,7 +36,7 @@ func TestMySQLConnection(t *testing.T) {
 				"public",
 				"localhost",
 				mysqlContainerPort,
-				maxConnectionLifetime,
+				WithConnectionMaxLife(maxConnectionLifetime),
 			),
 			expectError: true,
 		},
@@ -47,7 +48,7 @@ func TestMySQLConnection(t *testing.T) {
 				"public",
 				"localhost",
 				mysqlContainerPort,
-				maxConnectionLifetime,
+				WithConnectionMaxLife(maxConnectionLifetime),
 			),
 			expectError: true,
 		},
@@ -77,8 +78,11 @@ func TestMySQLConnection(t *testing.T) {
 	}
 }
 
-func TestMySQLJournalAndSnapshotTablesCreation(t *testing.T) {
+func TestMySQLDialect(t *testing.T) {
 	ctx := context.TODO()
+	numEvents := 10
+	numSnapshots := 3
+	persistenceID := uuid.New().String()
 	config := NewDBConfig(
 		"test",
 		"test",
@@ -86,51 +90,70 @@ func TestMySQLJournalAndSnapshotTablesCreation(t *testing.T) {
 		"public",
 		"localhost",
 		mysqlContainerPort,
-		maxConnectionLifetime,
+		WithConnectionMaxLife(maxConnectionLifetime),
 	)
 
-	t.Run(
-		"happy path", func(t *testing.T) {
-			// get instance of assert
-			assertions := assert.New(t)
-			// create the dialect instance
-			dialect, err := NewMySQLDialect(config)
-			assertions.NoError(err)
-			assertions.NotNil(dialect)
+	// get instance of assert
+	assertions := assert.New(t)
+	// create the mySQLDialect instance
+	mySQLDialect, err := NewMySQLDialect(config)
+	assertions.NoError(err)
+	assertions.NotNil(mySQLDialect)
 
-			// connect to the database
-			err = dialect.Connect(ctx)
-			assertions.NoError(err)
+	// connect to the database
+	err = mySQLDialect.Connect(ctx)
+	assertions.NoError(err)
 
-			// create the journal and snapshot table successfully
-			err = dialect.CreateSchemasIfNotExist(ctx)
-			assertions.NoError(err)
+	// create the journal and snapshot table successfully
+	err = mySQLDialect.CreateSchemasIfNotExist(ctx)
+	assertions.NoError(err)
 
-			// check whether both tables have been created
-			err = checkMySQLTable("testdb", "journal")
-			assertions.NoError(err)
-			assertions.Nil(err)
-			err = checkMySQLTable("testdb", "snapshot")
-			assertions.NoError(err)
-			assertions.Nil(err)
-		},
-	)
-}
+	// check whether both tables have been created
+	err = tableExist(mysqlHandle, MYSQL, "testdb", "journal")
+	assertions.NoError(err)
+	assertions.Nil(err)
+	err = tableExist(mysqlHandle, MYSQL, "testdb", "snapshot")
+	assertions.NoError(err)
+	assertions.Nil(err)
 
-func checkMySQLTable(schema, tableName string) error {
-	var result string
-	err := mysqlHandle.
-		QueryRow(
-			fmt.Sprintf(
-				"SELECT table_name FROM information_schema.tables WHERE table_schema = '%s' AND table_name = '%s' LIMIT 1; ",
-				schema, tableName,
-			),
-		).
-		Scan(&result)
-	switch {
-	case err == sql.ErrNoRows, err != nil:
-		return err
-	default:
-		return nil
+	// insert events into the journal store
+	for i := 0; i < numEvents; i++ {
+		persistenceID := uuid.New().String()
+		journal := NewJournal(persistenceID, &pb.AccountOpened{
+			AccountNumber: persistenceID,
+			Balance:       float32(i * 100),
+		}, i+1, "writer-1")
+
+		err = mySQLDialect.PersistJournal(ctx, journal)
+		assertions.NoError(err)
+		assertions.Nil(err)
 	}
+
+	// insert some data into the snapshot store
+	for i := 0; i < numSnapshots; i++ {
+		snapshot := NewSnapshot(persistenceID, &pb.Account{
+			AccountNumber: persistenceID,
+			ActualBalance: float32(i * 100),
+		}, i+1, "writer-2")
+
+		err = mySQLDialect.PersistSnapshot(ctx, snapshot)
+		assertions.NoError(err)
+		assertions.Nil(err)
+	}
+
+	// let us count the number of elements in the journal and snapshot
+	count := countJournal(mysqlHandle)
+	assertions.Equal(numEvents, count)
+	count = countSnapshot(mysqlHandle)
+	assertions.Equal(numSnapshots, count)
+
+	// let us fetch the latest snapshot for the given persistenceId
+	// and perform some assertions
+	latest, err := mySQLDialect.GetLatestSnapshot(ctx, persistenceID)
+	assertions.NoError(err)
+	assertions.Equal(latest.SequenceNumber, 3)
+	assertions.Equal(string(latest.SnapshotManifest), string(proto.MessageName(&pb.Account{})))
+	snapshot, ok := (latest.message()).(*pb.Account)
+	assertions.True(ok)
+	assertions.Equal(snapshot.ActualBalance, float32(200))
 }

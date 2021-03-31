@@ -18,38 +18,12 @@ const (
 	createSnapshotTableStmt    = "create-snapshot-table"
 	createJournalQueryStmt     = "create-journal"
 	createSnapshotQueryStmt    = "create-snapshot"
-	latestSnapshotQueryStmt    = "select-snapshot"
+	latestSnapshotQueryStmt    = "latest-snapshot"
 	readJournalQueryStmt       = "read-journals"
 	logicalJournalDeletionStmt = "logical-delete-journals"
 	journalDeletionStmt        = "delete-journals"
 	snapshotDeletionStmt       = "delete-snapshots"
 )
-
-// DBConfig represents the database configuration
-type DBConfig struct {
-	dbHost              string // the datastore host name. it can be an ip address as well
-	dbPort              int    // the datastore dbPort number
-	dbUser              string // the database user name
-	dbPassword          string // the database password
-	dbSchema            string // the schema when required, particular for postgres
-	dbName              string // the database name
-	dbConnectionMaxLife int
-}
-
-// NewDBConfig creates an instance of DBConfig
-func NewDBConfig(
-	dbUser, dbPassword, dbName, dbSchema, dbHost string, dbPort, dbConnectionMaxLife int,
-) DBConfig {
-	return DBConfig{
-		dbHost:              dbHost,
-		dbPort:              dbPort,
-		dbUser:              dbUser,
-		dbPassword:          dbPassword,
-		dbSchema:            dbSchema,
-		dbName:              dbName,
-		dbConnectionMaxLife: dbConnectionMaxLife,
-	}
-}
 
 // SQLDialect will be implemented any database dialect
 type SQLDialect interface {
@@ -71,7 +45,7 @@ type SQLDialect interface {
 }
 
 type dialect struct {
-	config DBConfig
+	config *DBConfig
 	db     *sql.DB
 
 	driver Driver
@@ -79,7 +53,7 @@ type dialect struct {
 }
 
 // NewDialect creates a new instance of SQLDialect
-func NewDialect(config DBConfig, driver Driver) (SQLDialect, error) {
+func NewDialect(config *DBConfig, driver Driver) (SQLDialect, error) {
 	// validates driver
 	if err := driver.IsValid(); err != nil {
 		return nil, err
@@ -94,11 +68,12 @@ func NewDialect(config DBConfig, driver Driver) (SQLDialect, error) {
 // CreateSchemasIfNotExist creates the database tables required
 func (d *dialect) CreateSchemasIfNotExist(ctx context.Context) error {
 	var result error
-	// Create the various tables
+	// create the journal table
 	if _, err := d.dotSQL.ExecContext(ctx, d.db, createJournalTableStmt); err != nil {
 		result = multierror.Append(result, err)
 	}
 
+	// create the snapshot table
 	if _, err := d.dotSQL.ExecContext(ctx, d.db, createSnapshotTableStmt); err != nil {
 		result = multierror.Append(result, err)
 	}
@@ -121,7 +96,8 @@ func (d *dialect) Connect(ctx context.Context) error {
 
 	// set some critical database settings
 	db.SetConnMaxLifetime(time.Duration(d.config.dbConnectionMaxLife) * time.Second)
-	db.SetMaxIdleConns(0)
+	db.SetMaxIdleConns(d.config.dbMaxIdleConnections)
+	db.SetMaxOpenConns(d.config.dbMaxOpenConnections)
 
 	err = db.PingContext(ctx)
 	if err != nil {
@@ -151,22 +127,18 @@ func (d *dialect) PersistJournal(ctx context.Context, journal *Journal) error {
 		d.db, createJournalQueryStmt, journal.PersistenceID, journal.SequenceNumber, journal.Timestamp, journal.Payload,
 		journal.EventManifest, journal.WriterID,
 	)
-
 	return err
 }
 
 // PersistSnapshot persists a snapshot entry into the snapshot data store
 func (d *dialect) PersistSnapshot(ctx context.Context, snapshot *Snapshot) error {
-	if _, err := d.dotSQL.ExecContext(
+	_, err := d.dotSQL.ExecContext(
 		ctx,
 		d.db, createSnapshotQueryStmt, snapshot.PersistenceID, snapshot.SequenceNumber, snapshot.Timestamp,
 		snapshot.Snapshot,
 		snapshot.SnapshotManifest, snapshot.WriterID,
-	); err != nil {
-		return err
-	}
-
-	return nil
+	)
+	return err
 }
 
 // GetLatestSnapshot fetch the latest snapshot for a given persistenceID
@@ -231,11 +203,8 @@ func (d *dialect) GetJournals(
 // the given sequence number will be either soft deleted or hard-deleted
 func (d *dialect) DeleteSnapshots(ctx context.Context, persistenceID string, toSequenceNumber int) error {
 	// execute the query against the database
-	if _, err := d.dotSQL.ExecContext(ctx, d.db, snapshotDeletionStmt, persistenceID, toSequenceNumber); err != nil {
-		return err
-	}
-
-	return nil
+	_, err := d.dotSQL.ExecContext(ctx, d.db, snapshotDeletionStmt, persistenceID, toSequenceNumber)
+	return err
 }
 
 // DeleteJournals removes some events from the journal. All events which sequence numbers are less than
@@ -247,9 +216,6 @@ func (d *dialect) DeleteJournals(ctx context.Context, persistenceID string, toSe
 	}
 
 	// execute the query against the database
-	if _, err := d.dotSQL.ExecContext(ctx, d.db, stmt, persistenceID, toSequenceNumber); err != nil {
-		return err
-	}
-
-	return nil
+	_, err := d.dotSQL.ExecContext(ctx, d.db, stmt, persistenceID, toSequenceNumber)
+	return err
 }

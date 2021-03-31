@@ -30,36 +30,36 @@ const (
 		
 		-- name: create-journal
 		INSERT INTO journal (persistence_id, sequence_number, timestamp, payload, manifest, writer_id)
-		VALUES (?, ?, ?, ?, ?, ?);
+		VALUES ($1, $2, $3, $4, $5, $6);
 		
 		-- name: create-snapshot
 		INSERT INTO snapshot (persistence_id, sequence_number, timestamp, snapshot, manifest, writer_id)
-		VALUES (?, ?, ?, ?, ?, ?);
+		VALUES ($1, $2, $3, $4, $5, $6);
 		
 		-- name: latest-snapshot
 		SELECT *
 		FROM snapshot
-		WHERE persistence_id = ?
+		WHERE persistence_id = $1
 		ORDER BY sequence_number DESC
 		LIMIT 1
 
 		-- name: read-journals
 		SELECT * FROM journal 
-		WHERE persistence_id = ? AND sequence_number >= ? AND sequence_number <= ? AND NOT deleted
+		WHERE persistence_id = $1 AND sequence_number >= $2 AND sequence_number <= $3 AND NOT deleted
 		ORDER BY sequence_number ASC
 
 		-- name: delete-journals
 		DELETE FROM journal 
-		WHERE persistence_id = ? AND sequence_number <= ?
+		WHERE persistence_id = $1 AND sequence_number <= $2
 
 		-- name: logical-delete-journals
 		UPDATE journal
 		SET deleted = TRUE
-		WHERE persistence_id = ? AND sequence_number <= ?
+		WHERE persistence_id = $1 AND sequence_number <= $2
 
 		-- name: delete-snapshot
 		DELETE FROM snapshots 
-		WHERE persistence_id = ? AND sequence_number <= ?
+		WHERE persistence_id = $1 AND sequence_number <= $2
 	`
 	mysqlSQL = `
 		-- name: create-journal-table

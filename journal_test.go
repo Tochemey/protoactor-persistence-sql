@@ -4,9 +4,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"google.golang.org/protobuf/proto"
-
 	pb "github.com/tochemey/protoactor-persistence-sql/gen"
+	"google.golang.org/protobuf/proto"
 )
 
 func TestJournal(t *testing.T) {
@@ -21,6 +20,6 @@ func TestJournal(t *testing.T) {
 
 	journal := NewJournal("some-persistence-id", event, 1, "some-writer-id")
 
-	assertions.Equal(journal.EventManifest, proto.MessageName(event))
+	assertions.Equal(journal.EventManifest, Manifest(proto.MessageName(event)))
 	assertions.True(proto.Equal(journal.message(), event))
 }

@@ -7,7 +7,7 @@ import (
 )
 
 // NewSQLServerProvider creates an instance postgres base SQLProvider
-func NewSQLServerProvider(ctx context.Context, actorSystem *actor.ActorSystem, dbConfig DBConfig, opts ...OptFunc) (*SQLProvider, error) {
+func NewSQLServerProvider(ctx context.Context, actorSystem *actor.ActorSystem, dbConfig *DBConfig, opts ...OptFunc) (*SQLProvider, error) {
 	dialect, err := NewSQLServerDialect(dbConfig)
 	if err != nil {
 		return nil, err
@@ -17,7 +17,7 @@ func NewSQLServerProvider(ctx context.Context, actorSystem *actor.ActorSystem, d
 }
 
 // NewSQLServerDialect creates a new instance of SQLDialect
-func NewSQLServerDialect(dialectConfig DBConfig) (SQLDialect, error) {
+func NewSQLServerDialect(dialectConfig *DBConfig) (SQLDialect, error) {
 	dialect, err := NewDialect(dialectConfig, SQLSERVER)
 	if err != nil {
 		return nil, err

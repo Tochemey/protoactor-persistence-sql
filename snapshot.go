@@ -7,7 +7,6 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/reflect/protoregistry"
-	"google.golang.org/protobuf/types/dynamicpb"
 )
 
 // Snapshot defines the snapshot row
@@ -17,18 +16,18 @@ type Snapshot struct {
 	// This persistent message's sequence number
 	SequenceNumber int
 	// The `timestamp` is the time the event was stored, in milliseconds since midnight, January 1, 1970 UTC.
-	Timestamp time.Time
+	Timestamp int64
 	// This snapshot message's payload.
 	Snapshot []byte
 	// A type hint for the snapshot. This will be the proto message name of the snapshot
-	SnapshotManifest protoreflect.FullName
+	SnapshotManifest Manifest
 	// Unique identifier of the writing persistent actor.
 	WriterID string
 }
 
 // NewSnapshot creates a new instance of Snapshot
 func NewSnapshot(persistenceID string, message proto.Message, sequenceNumber int, writerID string) *Snapshot {
-	manifest := message.ProtoReflect().Descriptor().FullName()
+	manifest := proto.MessageName(message)
 	bytes, err := proto.Marshal(message)
 	if err != nil {
 		log.Fatal(err)
@@ -37,23 +36,23 @@ func NewSnapshot(persistenceID string, message proto.Message, sequenceNumber int
 	return &Snapshot{
 		PersistenceID:    persistenceID,
 		SequenceNumber:   sequenceNumber,
-		Timestamp:        time.Now().UTC(),
+		Timestamp:        time.Now().UTC().Unix(),
 		Snapshot:         bytes,
-		SnapshotManifest: manifest,
+		SnapshotManifest: Manifest(manifest),
 		WriterID:         writerID,
 	}
 }
 
 func (snapshot *Snapshot) message() proto.Message {
-	t, err := protoregistry.GlobalTypes.FindMessageByName(snapshot.SnapshotManifest)
+	mt, err := protoregistry.GlobalTypes.FindMessageByName(protoreflect.FullName(snapshot.SnapshotManifest))
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	message := dynamicpb.NewMessage(t.Descriptor())
-	err = proto.Unmarshal(snapshot.Snapshot, message)
+	pm := mt.New().Interface()
+	err = proto.Unmarshal(snapshot.Snapshot, pm)
 	if err != nil {
 		log.Fatal(err)
 	}
-	return message
+	return pm
 }

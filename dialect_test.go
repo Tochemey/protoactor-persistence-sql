@@ -11,7 +11,6 @@ import (
 
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
-
 	"github.com/stretchr/testify/assert"
 )
 
@@ -46,37 +45,37 @@ func TestMain(m *testing.M) {
 
 func TestNewDialect(t *testing.T) {
 	testCases := map[string]struct {
-		config DBConfig
+		config *DBConfig
 		driver Driver
 		err    error
 	}{
 		// asserting the creation of Postgres SQLDialect
 		"postgres": {
-			config: DBConfig{},
+			config: &DBConfig{},
 			driver: POSTGRES,
 			err:    nil,
 		},
 		// asserting the creation of MySQL SQLDialect
 		"mysql": {
-			config: DBConfig{},
+			config: &DBConfig{},
 			driver: MYSQL,
 			err:    nil,
 		},
 		// asserting the creation of SQL Server SQLDialect
 		"sqlserver": {
-			config: DBConfig{},
+			config: &DBConfig{},
 			driver: SQLSERVER,
 			err:    nil,
 		},
 		// asserting the creation of Oracle SQLDialect
 		"oracle": {
-			config: DBConfig{},
+			config: &DBConfig{},
 			driver: "ORACLE",
 			err:    errors.New("invalid driver type"),
 		},
 		// asserting unknown driver type
 		"unknown": {
-			config: DBConfig{},
+			config: &DBConfig{},
 			driver: "unknown",
 			err:    errors.New("invalid driver type"),
 		},
@@ -120,6 +119,9 @@ func startPostgres() *sql.DB {
 				"POSTGRES_PASSWORD=test",
 				"POSTGRES_DB=testdb",
 				"listen_addresses = '*'",
+			},
+			Cmd: []string{
+				"postgres", "-c", "log_statement=all", "-c", "log_connections=on", "-c", "log_disconnections=on",
 			},
 		}, func(config *docker.HostConfig) {
 			// set AutoRemove to true so that stopped container goes away by itself
@@ -219,5 +221,47 @@ func freeResources() {
 
 	if err := mysqlContainerPool.Purge(mysqlContainerResource); err != nil {
 		log.Fatalf("Could not purge resource: %s", err)
+	}
+}
+
+func countJournal(db *sql.DB) int {
+	var count int
+	row := db.QueryRow("SELECT COUNT(*) FROM journal")
+	err := row.Scan(&count)
+	if err != nil {
+		return -1
+	}
+	return count
+}
+
+func countSnapshot(db *sql.DB) int {
+	var count int
+	row := db.QueryRow("SELECT COUNT(*) FROM snapshot")
+	err := row.Scan(&count)
+	if err != nil {
+		return -1
+	}
+	return count
+}
+
+func tableExist(db *sql.DB, driver Driver, schema, tableName string) error {
+	var query string
+	var result string
+	switch driver {
+	case POSTGRES:
+		query = fmt.Sprintf("SELECT to_regclass('%s.%s');", schema, tableName)
+	case MYSQL:
+		query = fmt.Sprintf(
+			"SELECT table_name FROM information_schema.tables WHERE table_schema = '%s' AND table_name = '%s' LIMIT 1; ",
+			schema, tableName,
+		)
+	}
+
+	err := db.QueryRow(query).Scan(&result)
+	switch {
+	case err == sql.ErrNoRows, err != nil:
+		return err
+	default:
+		return nil
 	}
 }

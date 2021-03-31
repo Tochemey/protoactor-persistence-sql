@@ -7,7 +7,7 @@ import (
 )
 
 // NewMySQLProvider creates an instance postgres base SQLProvider
-func NewMySQLProvider(ctx context.Context, actorSystem *actor.ActorSystem, dbConfig DBConfig, opts ...OptFunc) (*SQLProvider, error) {
+func NewMySQLProvider(ctx context.Context, actorSystem *actor.ActorSystem, dbConfig *DBConfig, opts ...OptFunc) (*SQLProvider, error) {
 	dialect, err := NewMySQLDialect(dbConfig)
 	if err != nil {
 		return nil, err
@@ -17,7 +17,7 @@ func NewMySQLProvider(ctx context.Context, actorSystem *actor.ActorSystem, dbCon
 }
 
 // NewMySQLDialect creates a new instance of SQLDialect
-func NewMySQLDialect(dbConfig DBConfig) (SQLDialect, error) {
+func NewMySQLDialect(dbConfig *DBConfig) (SQLDialect, error) {
 	dialect, err := NewDialect(dbConfig, MYSQL)
 	if err != nil {
 		return nil, err

@@ -13,13 +13,13 @@ func TestSnapshot(t *testing.T) {
 	assertions := assert.New(t)
 
 	// create an event to wrap into the journal
-	event := &pb.Account{
+	state := &pb.Account{
 		AccountNumber: "1234555",
 		ActualBalance: 2000,
 	}
 
-	snapshot := NewSnapshot("some-persistence-id", event, 1, "some-writer-id")
+	snapshot := NewSnapshot("some-persistence-id", state, 1, "some-writer-id")
 
-	assertions.Equal(snapshot.SnapshotManifest, proto.MessageName(event))
-	assertions.True(proto.Equal(snapshot.message(), event))
+	assertions.Equal(snapshot.SnapshotManifest, Manifest(proto.MessageName(state)))
+	assertions.True(proto.Equal(snapshot.message(), state))
 }
