@@ -57,8 +57,8 @@ const (
 		SET deleted = TRUE
 		WHERE persistence_id = $1 AND sequence_number <= $2
 
-		-- name: delete-snapshot
-		DELETE FROM snapshots 
+		-- name: delete-snapshots
+		DELETE FROM snapshot 
 		WHERE persistence_id = $1 AND sequence_number <= $2
 	`
 	mysqlSQL = `
