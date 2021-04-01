@@ -2,6 +2,7 @@ package persistencesql
 
 import (
 	"context"
+	"math"
 	"testing"
 
 	"github.com/google/uuid"
@@ -119,7 +120,7 @@ func TestMySQLDialect(t *testing.T) {
 	// insert events into the journal store
 	for i := 0; i < numEvents; i++ {
 		persistenceID := uuid.New().String()
-		journal := NewJournal(persistenceID, &pb.AccountOpened{
+		journal := NewJournal(persistenceID, &pb.AccountDebited{
 			AccountNumber: persistenceID,
 			Balance:       float32(i * 100),
 		}, i+1, "writer-1")
@@ -156,4 +157,36 @@ func TestMySQLDialect(t *testing.T) {
 	snapshot, ok := (latest.message()).(*pb.Account)
 	assertions.True(ok)
 	assertions.Equal(snapshot.ActualBalance, float32(200))
+
+	// let fetch some events from the journal store
+	for i := 0; i < numEvents; i++ {
+		journal := NewJournal(persistenceID, &pb.AccountDebited{
+			AccountNumber: persistenceID,
+			Balance:       float32(i * 100),
+		}, i+1, "some-actor-pid")
+
+		err = mySQLDialect.PersistJournal(ctx, journal)
+		assertions.NoError(err)
+		assertions.Nil(err)
+	}
+
+	journals, err := mySQLDialect.GetJournals(ctx, persistenceID, 2, 6)
+	assertions.NoError(err)
+	assertions.NotNil(journals)
+	assertions.Equal(len(journals), 5)
+
+	// delete some events from the journal
+	err = mySQLDialect.DeleteJournals(ctx, persistenceID, 2, true)
+	assertions.NoError(err)
+
+	// check the number of events remaining for the given persistence ID
+	journals, err = mySQLDialect.GetJournals(ctx, persistenceID, 1, math.MaxInt32)
+	assertions.NoError(err)
+	assertions.NotNil(journals)
+	assertions.Equal(len(journals), 8)
+
+	// delete some snapshots
+	err = mySQLDialect.DeleteSnapshots(ctx, persistenceID, 2)
+	assertions.NoError(err)
+
 }

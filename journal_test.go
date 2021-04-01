@@ -13,7 +13,7 @@ func TestJournal(t *testing.T) {
 	assertions := assert.New(t)
 
 	// create an event to wrap into the journal
-	event := &pb.AccountOpened{
+	event := &pb.AccountDebited{
 		AccountNumber: "1234555",
 		Balance:       2000,
 	}

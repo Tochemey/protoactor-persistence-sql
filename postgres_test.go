@@ -2,6 +2,7 @@ package persistencesql
 
 import (
 	"context"
+	"math"
 	"testing"
 
 	"github.com/google/uuid"
@@ -120,10 +121,10 @@ func TestPostgresSQLDialect(t *testing.T) {
 	// insert events into the journal store
 	for i := 0; i < numEvents; i++ {
 		persistenceID := uuid.New().String()
-		journal := NewJournal(persistenceID, &pb.AccountOpened{
+		journal := NewJournal(persistenceID, &pb.AccountDebited{
 			AccountNumber: persistenceID,
 			Balance:       float32(i * 100),
-		}, i+1, "writer-1")
+		}, i+1, "some-actor-pid")
 
 		err = postgresDialect.PersistJournal(ctx, journal)
 		assertions.NoError(err)
@@ -135,7 +136,7 @@ func TestPostgresSQLDialect(t *testing.T) {
 		snapshot := NewSnapshot(persistenceID, &pb.Account{
 			AccountNumber: persistenceID,
 			ActualBalance: float32(i * 100),
-		}, i+1, "writer-2")
+		}, i+1, "some-actor-pid")
 
 		err = postgresDialect.PersistSnapshot(ctx, snapshot)
 		assertions.NoError(err)
@@ -157,4 +158,36 @@ func TestPostgresSQLDialect(t *testing.T) {
 	snapshot, ok := (latest.message()).(*pb.Account)
 	assertions.True(ok)
 	assertions.Equal(snapshot.ActualBalance, float32(200))
+
+	// let fetch some events from the journal store
+	for i := 0; i < numEvents; i++ {
+		journal := NewJournal(persistenceID, &pb.AccountDebited{
+			AccountNumber: persistenceID,
+			Balance:       float32(i * 100),
+		}, i+1, "some-actor-pid")
+
+		err = postgresDialect.PersistJournal(ctx, journal)
+		assertions.NoError(err)
+		assertions.Nil(err)
+	}
+
+	journals, err := postgresDialect.GetJournals(ctx, persistenceID, 2, 6)
+	assertions.NoError(err)
+	assertions.NotNil(journals)
+	assertions.Equal(len(journals), 5)
+
+	// delete some events from the journal
+	err = postgresDialect.DeleteJournals(ctx, persistenceID, 2, true)
+	assertions.NoError(err)
+
+	// check the number of events remaining for the given persistence ID
+	journals, err = postgresDialect.GetJournals(ctx, persistenceID, 1, math.MaxInt32)
+	assertions.NoError(err)
+	assertions.NotNil(journals)
+	assertions.Equal(len(journals), 8)
+
+	// delete some snapshots
+	err = postgresDialect.DeleteSnapshots(ctx, persistenceID, 2)
+	assertions.NoError(err)
+
 }
