@@ -6,7 +6,7 @@ require (
 	github.com/AsynkronIT/protoactor-go v0.0.0-20210305101446-d68990342ece
 	github.com/denisenkom/go-mssqldb v0.9.0
 	github.com/gchaincl/dotsql v1.0.0
-	github.com/go-sql-driver/mysql v1.5.0
+	github.com/go-sql-driver/mysql v1.6.0
 	github.com/golang/protobuf v1.5.2
 	github.com/google/uuid v1.1.2
 	github.com/hashicorp/go-multierror v1.1.1
