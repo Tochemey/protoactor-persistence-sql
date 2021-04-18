@@ -13,4 +13,4 @@ jobs:
     - stage: test
       script:
         - earthly --version
-        - earthly -P --build-arg COMMIT_HASH=$TRAVIS_COMMIT --build-arg BRANCH_NAME=$TRAVIS_BRANCH --build-arg CODECOV_TOKEN=$CODECOV_TOKEN --build-arg BUILD_NUMBER=$TRAVIS_BUILD_NUMBER  +all
+        - earthly -P --build-arg COMMIT_HASH=$TRAVIS_COMMIT --build-arg BRANCH_NAME=$TRAVIS_BRANCH --build-arg BUILD_NUMBER=$TRAVIS_BUILD_NUMBER  +all
