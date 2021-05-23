@@ -11,12 +11,12 @@ all:
 
 code:
 	# download deps
-	COPY -dir go.mod go.sum ./
+	COPY --dir go.mod go.sum ./
 	RUN go mod download -x
 
 	# copy in code
-	COPY -dir ./ ./
-	COPY -dir +protogen/gen ./
+	COPY --dir ./ ./
+	COPY --dir +protogen/gen ./
 
 vendor:
 	FROM +code
@@ -59,7 +59,7 @@ protogen:
 	ARG OUT="gen"
     ENV OUT=${OUT}
 
-	COPY -dir protos /defs
+	COPY --dir protos /defs
 
 	ARG GENERATE = entrypoint.sh --no-google-includes -l go -o ./${OUT}
 
