@@ -4,7 +4,7 @@ go 1.15
 
 require (
 	github.com/AsynkronIT/protoactor-go v0.0.0-20210305101446-d68990342ece
-	github.com/denisenkom/go-mssqldb v0.10.0
+	github.com/denisenkom/go-mssqldb v0.10.0 // indirect
 	github.com/gchaincl/dotsql v1.0.0
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/golang/protobuf v1.5.2
