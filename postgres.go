@@ -13,6 +13,7 @@ func NewPostgresProvider(ctx context.Context, actorSystem *actor.ActorSystem, db
 		return nil, err
 	}
 
+	// return the instance of the dialect
 	return NewSQLProvider(ctx, actorSystem, dialect, opts...), nil
 }
 

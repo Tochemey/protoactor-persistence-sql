@@ -43,18 +43,6 @@ func TestConnectionString(t *testing.T) {
 			},
 			expected: "root:test@tcp(localhost:3306)/pg",
 		},
-		// asserting sql server connection string
-		"sqlserver connection string": {
-			driver: SQLSERVER,
-			config: dbConfig{
-				dbHost:     "localhost",
-				dbPort:     1433,
-				dbName:     "tests",
-				dbUser:     "sa",
-				dbPassword: "test",
-			},
-			expected: "server=localhost;user id=sa;password=test;port=1433;database=tests;",
-		},
 		// asserting that unknown driver type will return empty string
 		"not yet supported driver": {
 			driver:   "ORACLE",
@@ -93,11 +81,6 @@ func TestIsValid(t *testing.T) {
 			driver:    MYSQL,
 			expectErr: false,
 		},
-		// asserting that sqlserver is driver type
-		"sqlserver": {
-			driver:    SQLSERVER,
-			expectErr: false,
-		},
 		// asserting that oracle is driver type
 		"oracle": {
 			driver:    "ORACLE",
@@ -134,11 +117,6 @@ func TestSchemaFile(t *testing.T) {
 			driver:   MYSQL,
 			expected: mysqlSQL,
 		},
-		// asserting that the sqlserver driver will return the correct schema file
-		"sqlserver": {
-			driver:   SQLSERVER,
-			expected: sqlServerSQL,
-		},
 		// asserting that an unknown driver type will return an empty string as schema file
 		"unknown": {
 			driver:   "DB2",
@@ -169,10 +147,6 @@ func TestDriverString(t *testing.T) {
 		"mysql": {
 			driver:   MYSQL,
 			expected: "mysql",
-		},
-		"sqlserver": {
-			driver:   SQLSERVER,
-			expected: "sqlserver",
 		},
 		"oracle": {
 			driver:   "ORACLE",

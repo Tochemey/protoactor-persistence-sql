@@ -6,7 +6,6 @@ import (
 	"log"
 	"time"
 
-	_ "github.com/denisenkom/go-mssqldb" // load the sqlserver driver
 	"github.com/gchaincl/dotsql"
 	_ "github.com/go-sql-driver/mysql" // load the mysql driver
 	"github.com/hashicorp/go-multierror"

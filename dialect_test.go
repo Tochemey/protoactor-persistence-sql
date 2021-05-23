@@ -14,18 +14,23 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var mysqlHandle *sql.DB
-var mysqlContainerResource *dockertest.Resource
-var mysqlContainerPool *dockertest.Pool
-var mysqlContainerPort int
+var (
+	// mysql test
+	mysqlHandle            *sql.DB
+	mysqlContainerResource *dockertest.Resource
+	mysqlContainerPool     *dockertest.Pool
+	mysqlContainerPort     int
 
-var postgresHandle *sql.DB
-var postgresContainerPort int
-var postgresContainerResource *dockertest.Resource
-var postgresContainerPool *dockertest.Pool
+	// postgres test
+	postgresHandle            *sql.DB
+	postgresContainerPort     int
+	postgresContainerResource *dockertest.Resource
+	postgresContainerPool     *dockertest.Pool
 
-var database = "testdb"
-var maxConnectionLifetime = 120
+	// test database settings
+	database              = "testdb"
+	maxConnectionLifetime = 120
+)
 
 func TestMain(m *testing.M) {
 	// start the postgres test container

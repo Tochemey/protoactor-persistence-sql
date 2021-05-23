@@ -13,7 +13,6 @@ sql datastore.
 The following sql-based datastore are supported out-of-the-box:
 
 - MySQL
-- SQLServer
 - Postgres
 
 ## TODOs

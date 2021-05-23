@@ -14,14 +14,12 @@ const (
 	POSTGRES Driver = "postgres"
 	// MYSQL driver type
 	MYSQL Driver = "mysql"
-	// SQLSERVER driver type
-	SQLSERVER Driver = "sqlserver"
 )
 
 // IsValid checks whether the given driver is valid or not
 func (d Driver) IsValid() error {
 	switch d {
-	case POSTGRES, MYSQL, SQLSERVER:
+	case POSTGRES, MYSQL:
 		return nil
 	}
 	return errors.New("invalid driver type")
@@ -53,11 +51,6 @@ func (d Driver) ConnStr(dbHost string, dbPort int, dbName, dbUser, dbPassword, d
 		connectionInfo = fmt.Sprintf(
 			"%s:%s@tcp(%s:%v)/%s", dbUser, dbPassword, dbHost, dbPort, dbName,
 		)
-	case SQLSERVER:
-		connectionInfo = fmt.Sprintf(
-			"server=%s;user id=%s;password=%s;port=%d;database=%s;",
-			dbHost, dbUser, dbPassword, dbPort, dbName,
-		)
 	}
 
 	return connectionInfo
@@ -70,8 +63,6 @@ func (d Driver) SQLFile() string {
 		return postgresSQL
 	case MYSQL:
 		return mysqlSQL
-	case SQLSERVER:
-		return sqlServerSQL
 	}
 
 	return ""

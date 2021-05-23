@@ -45,7 +45,7 @@ func WithConnectionMaxLife(connectionMaxLife int) PoolOpt {
 	}
 }
 
-// WithMaxOpenConnection sets the max open connections
+// WithMaxOpenConnections sets the max open connections
 func WithMaxOpenConnections(maxOpenConnection int) PoolOpt {
 	return func(config *DBConfig) {
 		config.dbMaxOpenConnections = maxOpenConnection
