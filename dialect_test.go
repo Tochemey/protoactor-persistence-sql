@@ -66,12 +66,6 @@ func TestNewDialect(t *testing.T) {
 			driver: MYSQL,
 			err:    nil,
 		},
-		// asserting the creation of SQL Server SQLDialect
-		"sqlserver": {
-			config: &DBConfig{},
-			driver: SQLSERVER,
-			err:    nil,
-		},
 		// asserting the creation of Oracle SQLDialect
 		"oracle": {
 			config: &DBConfig{},
