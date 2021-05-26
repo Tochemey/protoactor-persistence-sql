@@ -29,7 +29,7 @@ jobs:
           git checkout -b "$branch" || true
       - name: Docker Login
         env:
-          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USER }}
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
           DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
         run: docker login --username "$DOCKERHUB_USERNAME" --password "$DOCKERHUB_TOKEN"
       - name: Download latest earthly
