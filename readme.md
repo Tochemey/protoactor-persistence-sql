@@ -1,4 +1,4 @@
-# ProtoActor Persistence SQL
+## ProtoActor Persistence SQL
 
 ![Codacy grade](https://img.shields.io/codacy/grade/3e0d5b0d52cd4ef4943a9045375f216d?style=for-the-badge)
 ![GitHub Workflow Status (branch)](https://img.shields.io/github/workflow/status/tochemey/protoactor-persistence-sql/CI/master?style=for-the-badge)
@@ -13,9 +13,9 @@ SQL datastore. At the moment the following data stores are supported out of the 
 The events and state snapshots are protocol buffer bytes array persisted respectively in the journal and snapshot
 tables.
 
-## Journal schemas
+### Journal schemas
 
-### Postgres
+#### Postgres
 
 ```postgresql
 CREATE TABLE IF NOT EXISTS journal
@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS journal
 );
 ```
 
-### MySQL
+#### MySQL
 
 ```mysql
 CREATE TABLE IF NOT EXISTS journal
@@ -49,9 +49,9 @@ CREATE TABLE IF NOT EXISTS journal
 );
 ```
 
-## Snapshot schemas
+### Snapshot schemas
 
-### Postgres
+#### Postgres
 
 ```postgresql
 CREATE TABLE IF NOT EXISTS snapshot
@@ -66,7 +66,7 @@ CREATE TABLE IF NOT EXISTS snapshot
 );
 ```
 
-### MySQL
+#### MySQL
 
 ```mysql
 CREATE TABLE IF NOT EXISTS snapshot
@@ -81,3 +81,4 @@ CREATE TABLE IF NOT EXISTS snapshot
 );
 ```
 
+Note: _The developer does not need to create those schemas. They are created by default by the library._
