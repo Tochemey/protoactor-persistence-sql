@@ -9,8 +9,8 @@ require (
 	github.com/golang/protobuf v1.5.2
 	github.com/google/uuid v1.3.0
 	github.com/hashicorp/go-multierror v1.1.1
-	github.com/ory/dockertest/v3 v3.8.1
 	github.com/lib/pq v1.10.4
-	github.com/stretchr/testify v1.7.0
+	github.com/ory/dockertest/v3 v3.8.1
+	github.com/stretchr/testify v1.7.1
 	google.golang.org/protobuf v1.26.0
 )
