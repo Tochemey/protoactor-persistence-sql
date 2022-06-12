@@ -40,6 +40,9 @@ test:
 coverage:
 	FROM +test
 
+    # install gcc dependencies into alpine for CGO
+    RUN apk add gcc musl-dev curl git openssh
+
     ARG COMMIT_HASH=""
     ARG BRANCH_NAME=""
     ARG BUILD_NUMBER=""
