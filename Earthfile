@@ -11,6 +11,8 @@ all:
     BUILD +coverage
 
 code:
+    FROM +golang-base
+
 	# download deps
 	COPY --dir go.mod go.sum ./
 	RUN go mod download -x
