@@ -65,7 +65,7 @@ protogen:
     # generate the pbs
     RUN buf generate
 
-    SAVE ARTIFACT /defs/gen / AS LOCAL ${OUT}
+   SAVE ARTIFACT gen gen AS LOCAL gen
 
 golang-base:
 
