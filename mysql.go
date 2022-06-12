@@ -3,7 +3,7 @@ package persistencesql
 import (
 	"context"
 
-	"github.com/AsynkronIT/protoactor-go/actor"
+	"github.com/asynkron/protoactor-go/actor"
 )
 
 // NewMySQLProvider creates an instance postgres base SQLProvider

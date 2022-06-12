@@ -1,6 +1,7 @@
 # Earthfile
+VERSION 0.6
 
-FROM golang:1.16.2-buster
+FROM golang:1.18.1-alpine
 
 WORKDIR /app
 
@@ -47,22 +48,46 @@ coverage:
 lint:
     FROM +vendor
 
-     # binary will be $(go env GOPATH)/bin/golangci-lint
-    RUN curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.38.0
+    COPY .golangci.yml ./
 
     # Runs golangci-lint with settings:
 	RUN golangci-lint run -v
 
 protogen:
-	FROM namely/protoc-all:1.34_0
+    FROM +golang-base
 
-	ARG OUT="gen"
-    ENV OUT=${OUT}
+    WORKDIR workspace
 
-	COPY --dir protos /defs
+    # copy the proto files to generate
+    COPY --dir testdata/ .
+    COPY buf.work.yaml buf.gen.yaml .
 
-	ARG GENERATE = entrypoint.sh --no-google-includes -l go -o ./${OUT}
-
-	RUN ${GENERATE} -i protos -d protos
+    # generate the pbs
+    RUN buf generate
 
     SAVE ARTIFACT /defs/gen / AS LOCAL ${OUT}
+
+golang-base:
+
+    WORKDIR /app
+    ARG VERSION=dev
+
+    # install gcc dependencies into alpine for CGO
+    RUN apk add gcc musl-dev curl git openssh
+
+    # install docker tools
+    # https://docs.docker.com/engine/install/debian/
+    RUN apk add --update --no-cache docker
+
+    # install the go generator plugins
+    RUN go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+    RUN go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+    RUN export PATH="$PATH:$(go env GOPATH)/bin"
+
+    # install buf from source
+    RUN GO111MODULE=on GOBIN=/usr/local/bin go install github.com/bufbuild/buf/cmd/buf@v1.3.1
+
+    # install linter
+    # binary will be $(go env GOPATH)/bin/golangci-lint
+    RUN curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.45.2
+    RUN ls -la $(which golangci-lint)

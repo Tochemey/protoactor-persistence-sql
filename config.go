@@ -4,7 +4,7 @@ package persistencesql
 type DBConfig struct {
 	dbHost               string // the datastore host name. it can be an ip address as well
 	dbPort               int    // the datastore dbPort number
-	dbUser               string // the database user name
+	dbUser               string // the database username
 	dbPassword           string // the database password
 	dbSchema             string // the schema when required, particular for postgres
 	dbName               string // the database name

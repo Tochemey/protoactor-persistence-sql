@@ -4,7 +4,8 @@
 ![GitHub Workflow Status (branch)](https://img.shields.io/github/workflow/status/tochemey/protoactor-persistence-sql/CI/master?style=flat-square)
 ![Codecov](https://img.shields.io/codecov/c/github/tochemey/protoactor-persistence-sql?style=flat-square)
 
-An implementation of the ProtoActor persistence plugin APIs using RDBMS. It writes journal and snapshot to a configured
+An implementation of the [ProtoActor Go](https://github.com/asynkron/protoactor-go) persistence plugin APIs using RDBMS.
+It writes journal and snapshot to a configured
 SQL datastore. At the moment the following data stores are supported out of the box:
 
 - [MySQL](https://www.mysql.com/)

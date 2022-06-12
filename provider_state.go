@@ -4,7 +4,8 @@ import (
 	"log"
 	"sync"
 
-	"github.com/golang/protobuf/proto"
+	"github.com/asynkron/protoactor-go/persistence"
+	"google.golang.org/protobuf/proto"
 )
 
 // SQLProviderState is an implementation of the proto-actor ProviderState interface
@@ -12,6 +13,8 @@ type SQLProviderState struct {
 	*SQLProvider
 	wg sync.WaitGroup
 }
+
+var _ persistence.ProviderState = (*SQLProviderState)(nil)
 
 // GetSnapshot fetches the latest snapshot of a given persistenceID represented by the actorName
 // actorName is the persistenceID
@@ -30,9 +33,7 @@ func (s *SQLProviderState) GetSnapshot(actorName string) (snapshot interface{}, 
 // snapshotIndex is the sequenceNumber of the snapshot data
 // snapshot is the payload to persist
 func (s *SQLProviderState) PersistSnapshot(actorName string, snapshotIndex int, snapshot proto.Message) {
-	// let us convert the v1 proto to a v2 proto message
-
-	newSnapshot := NewSnapshot(actorName, proto.MessageV2(snapshot), snapshotIndex, s.writer.Id)
+	newSnapshot := NewSnapshot(actorName, snapshot, snapshotIndex, s.writer.Id)
 	if err := s.dialect.PersistSnapshot(s.ctx, newSnapshot); err != nil {
 		log.Fatalf(
 			"error: %v persisting snapshot: %s for persistenceID: %s", err, newSnapshot.SnapshotManifest, actorName,
@@ -71,7 +72,7 @@ func (s *SQLProviderState) GetEvents(
 // eventIndex is the event to persist sequenceNumber
 // event is the event payload
 func (s *SQLProviderState) PersistEvent(actorName string, eventIndex int, event proto.Message) {
-	journal := NewJournal(actorName, proto.MessageV2(event), eventIndex, s.writer.Id)
+	journal := NewJournal(actorName, event, eventIndex, s.writer.Id)
 	if err := s.dialect.PersistJournal(s.ctx, journal); err != nil {
 		log.Fatalf("error: %v persisting event: %s for persistenceID: %s", err, journal.EventManifest, actorName)
 	}
