@@ -1,7 +1,7 @@
 ## ProtoActor Persistence SQL
 
 ![Codacy grade](https://img.shields.io/codacy/grade/3e0d5b0d52cd4ef4943a9045375f216d?style=flat-square)
-![GitHub Workflow Status (branch)](https://img.shields.io/github/workflow/status/tochemey/protoactor-persistence-sql/CI/master?style=flat-square)
+![GitHub Workflow Status (branch)](https://img.shields.io/github/actions/workflow/status/Tochemey/protoactor-persistence-sql/ci.yml?branch=master&style=flat-square)
 ![Codecov](https://img.shields.io/codecov/c/github/tochemey/protoactor-persistence-sql?style=flat-square)
 
 An implementation of the ProtoActor persistence plugin APIs using RDBMS. It writes journal and snapshot to a configured
